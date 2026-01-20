@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus } from 'lucide-react';
+import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine } from 'lucide-react';
 
 const DICE_TYPES = [
   { type: 'd4', sides: 4, color: 'bg-red-600', hover: 'hover:bg-red-700' },
@@ -42,6 +42,7 @@ export default function App() {
   const [modifier, setModifier] = useState(0);
   
   // Character State
+  const [characterName, setCharacterName] = useState('');
   const [stats, setStats] = useState({
     str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
   });
@@ -62,6 +63,7 @@ export default function App() {
   const [specialEffect, setSpecialEffect] = useState(null); 
 
   const resultsRef = useRef(null);
+  const fileInputRef = useRef(null); // For importing file
 
   // Clear special effects
   useEffect(() => {
@@ -111,6 +113,65 @@ export default function App() {
     setRollMode('normal');
     setSpecialEffect(null);
   };
+
+  // --- Import / Export Logic ---
+  const handleExport = () => {
+    const data = {
+      characterName,
+      stats,
+      pb,
+      profs: Array.from(profs) // Convert Set to Array for JSON
+    };
+    
+    // Create friendly filename: "Grog Strongjaw" -> "dnd-grog-strongjaw.json"
+    const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'character';
+    const filename = `dnd-${safeName}.json`;
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        
+        // Basic validation and update
+        if (data.characterName !== undefined) setCharacterName(data.characterName);
+        if (data.stats) setStats(data.stats);
+        if (data.pb) setPb(data.pb);
+        if (data.profs && Array.isArray(data.profs)) {
+          setProfs(new Set(data.profs));
+        }
+        
+        // Reset file input
+        e.target.value = null;
+        alert("Character imported successfully!");
+      } catch (error) {
+        console.error("Error importing character:", error);
+        alert("Failed to import character. Invalid file.");
+      }
+    };
+    reader.readAsText(file);
+  };
+  // -----------------------------
 
   const rollDice = (overrideCounts = null, overrideMod = null, label = null) => {
     const currentCounts = overrideCounts || counts;
@@ -386,12 +447,53 @@ export default function App() {
         {/* SKILLS TAB */}
         {activeTab === 'skills' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Character Stats */}
+            {/* Character Stats & Import/Export */}
             <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-4">
+              
+              {/* Character Name Input */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <PenLine className="h-4 w-4 text-slate-500" />
+                </div>
+                <input
+                  type="text"
+                  value={characterName}
+                  onChange={(e) => setCharacterName(e.target.value)}
+                  placeholder="Character Name (e.g. Grog)"
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 pl-9 pr-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-bold tracking-wide"
+                />
+              </div>
+
               <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                  <User className="w-5 h-5 text-orange-400" /> Character Scores
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <User className="w-5 h-5 text-orange-400" /> Scores
+                  </h2>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button 
+                      onClick={handleExport} 
+                      className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 hover:text-white transition-colors"
+                      title="Export Character"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={handleImportClick} 
+                      className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 hover:text-white transition-colors"
+                      title="Import Character"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden" 
+                      accept=".json"
+                    />
+                  </div>
+                </div>
+                
                 <div className="flex items-center gap-2">
                    <span className="text-xs uppercase text-slate-400 font-bold">Prof. Bonus:</span>
                    <input type="number" value={pb} onChange={(e) => setPb(e.target.value)} className="w-12 bg-slate-900 border border-slate-600 rounded p-1 text-center font-bold text-white" />

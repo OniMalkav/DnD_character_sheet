@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine, Package, Coins } from 'lucide-react';
+import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine, Package, Coins, ScrollText } from 'lucide-react';
 
 const DICE_TYPES = [
   { type: 'd4', sides: 4, color: 'bg-red-600', hover: 'hover:bg-red-700' },
@@ -33,7 +33,7 @@ const SKILLS_DATA = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills' | 'inventory'
+  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills' | 'inventory' | 'character'
   
   // Dice State
   const [counts, setCounts] = useState({
@@ -51,6 +51,19 @@ export default function App() {
   const [inventory, setInventory] = useState(''); // General Inventory text
   const [consumables, setConsumables] = useState([]); // List of consumables {id, name, count}
   const [currency, setCurrency] = useState({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
+  
+  // New Character Bio State
+  const [charInfo, setCharInfo] = useState({
+    race: '',
+    class: '',
+    level: 1,
+    class2: '', // Multiclass
+    level2: '', // Multiclass Level
+    background: '',
+    alignment: '',
+    xp: 0,
+    feats: '' // Feats & Traits
+  });
   
   // Skill Bonus Dice (Guidance, Bardic Inspiration, etc.)
   const [skillBonuses, setSkillBonuses] = useState({
@@ -99,6 +112,10 @@ export default function App() {
     setStats(prev => ({ ...prev, [stat]: parseInt(val) || 0 }));
   };
 
+  const updateCharInfo = (field, val) => {
+    setCharInfo(prev => ({ ...prev, [field]: val }));
+  };
+
   const toggleSkillBonus = (dieType) => {
     setSkillBonuses(prev => ({
       ...prev,
@@ -143,6 +160,7 @@ export default function App() {
   const handleExport = () => {
     const data = {
       characterName,
+      charInfo,
       stats,
       pb,
       inventory,
@@ -183,6 +201,10 @@ export default function App() {
         
         // Basic validation and update
         if (data.characterName !== undefined) setCharacterName(data.characterName);
+        
+        // Safe merge for charInfo to support older save files
+        if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
+        
         if (data.stats) setStats(data.stats);
         if (data.pb) setPb(data.pb);
         if (data.inventory !== undefined) setInventory(data.inventory);
@@ -387,9 +409,10 @@ export default function App() {
           </div>
           
           <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-700">
-            <button onClick={() => setActiveTab('dice')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'dice' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Dice</button>
-            <button onClick={() => setActiveTab('skills')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'skills' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Skills</button>
-            <button onClick={() => setActiveTab('inventory')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Inv</button>
+            <button onClick={() => setActiveTab('dice')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'dice' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Dice</button>
+            <button onClick={() => setActiveTab('skills')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'skills' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Skills</button>
+            <button onClick={() => setActiveTab('inventory')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Inv</button>
+            <button onClick={() => setActiveTab('character')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'character' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Char</button>
           </div>
 
           <button onClick={() => setShowHistory(!showHistory)} className={`p-2 rounded-full transition-colors ${showHistory ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}><History className="w-6 h-6" /></button>
@@ -432,8 +455,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Global Controls - Show only when NOT in inventory */}
-        {activeTab !== 'inventory' && (
+        {/* Global Controls - Show only when NOT in inventory or character */}
+        {activeTab !== 'inventory' && activeTab !== 'character' && (
           <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 flex gap-1 shadow-sm">
             <button onClick={() => setRollMode('normal')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'normal' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50'}`}>Normal</button>
             <button onClick={() => setRollMode('advantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'advantage' ? 'bg-green-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'}`}>Advantage</button>
@@ -690,8 +713,164 @@ export default function App() {
           </div>
         )}
 
+        {/* CHARACTER TAB */}
+        {activeTab === 'character' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+              <div className="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <User className="w-6 h-6 text-orange-400" /> Character Profile
+                </h2>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleExport} 
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    <Download className="w-4 h-4" /> Export
+                  </button>
+                  <button 
+                    onClick={handleImportClick} 
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    <Upload className="w-4 h-4" /> Import
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden" 
+                    accept=".json"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Character Name */}
+                <div>
+                  <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Character Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PenLine className="h-5 w-5 text-slate-500" />
+                    </div>
+                    <input
+                      type="text"
+                      value={characterName}
+                      onChange={(e) => setCharacterName(e.target.value)}
+                      placeholder="e.g. Grog Strongjaw"
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 pr-3 text-white text-lg placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-bold tracking-wide"
+                    />
+                  </div>
+                </div>
+
+                {/* Grid for other details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Class 1 */}
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Class & Level (Primary)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={charInfo.class}
+                        onChange={(e) => updateCharInfo('class', e.target.value)}
+                        placeholder="e.g. Barbarian"
+                        className="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-2 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      />
+                      <input
+                        type="number"
+                        value={charInfo.level}
+                        onChange={(e) => updateCharInfo('level', e.target.value)}
+                        placeholder="Lvl"
+                        className="w-16 bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-center font-bold placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Class 2 (Multiclass) */}
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Multiclass (Optional)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={charInfo.class2}
+                        onChange={(e) => updateCharInfo('class2', e.target.value)}
+                        placeholder="e.g. Fighter"
+                        className="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-2 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      />
+                      <input
+                        type="number"
+                        value={charInfo.level2}
+                        onChange={(e) => updateCharInfo('level2', e.target.value)}
+                        placeholder="Lvl"
+                        className="w-16 bg-slate-900 border border-slate-600 rounded-lg p-2 text-white text-center font-bold placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Race</label>
+                    <input
+                      type="text"
+                      value={charInfo.race}
+                      onChange={(e) => updateCharInfo('race', e.target.value)}
+                      placeholder="e.g. Goliath"
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Background</label>
+                    <input
+                      type="text"
+                      value={charInfo.background}
+                      onChange={(e) => updateCharInfo('background', e.target.value)}
+                      placeholder="e.g. Outlander"
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Alignment</label>
+                    <input
+                      type="text"
+                      value={charInfo.alignment}
+                      onChange={(e) => updateCharInfo('alignment', e.target.value)}
+                      placeholder="e.g. Chaotic Good"
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Experience Points</label>
+                    <input
+                      type="number"
+                      value={charInfo.xp}
+                      onChange={(e) => updateCharInfo('xp', e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-white font-mono placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+
+                  {/* Feats Section (Full width) */}
+                  <div className="sm:col-span-2 mt-2">
+                    <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                       <ScrollText className="w-3 h-3" /> Feats & Traits
+                    </label>
+                    <textarea
+                      value={charInfo.feats}
+                      onChange={(e) => updateCharInfo('feats', e.target.value)}
+                      placeholder="List your feats, racial traits, and class features here..."
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-mono text-sm h-32 resize-none"
+                    />
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results Area */}
-        {result && (
+        {result && activeTab !== 'inventory' && activeTab !== 'character' && (
           <div ref={resultsRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-20">
             <div className={`bg-slate-800 rounded-2xl border-2 overflow-hidden shadow-2xl transition-colors duration-300 ${specialEffect === 'crit' ? 'border-yellow-500/50 ring-2 ring-yellow-500/20' : specialEffect === 'fail' ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-slate-600'}`}>
               

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine } from 'lucide-react';
+import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine, Package, Coins } from 'lucide-react';
 
 const DICE_TYPES = [
   { type: 'd4', sides: 4, color: 'bg-red-600', hover: 'hover:bg-red-700' },
@@ -33,7 +33,7 @@ const SKILLS_DATA = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills'
+  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills' | 'inventory'
   
   // Dice State
   const [counts, setCounts] = useState({
@@ -48,6 +48,9 @@ export default function App() {
   });
   const [pb, setPb] = useState(2); // Proficiency Bonus
   const [profs, setProfs] = useState(new Set()); // Set of skill names
+  const [inventory, setInventory] = useState(''); // General Inventory text
+  const [consumables, setConsumables] = useState([]); // List of consumables {id, name, count}
+  const [currency, setCurrency] = useState({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
   
   // Skill Bonus Dice (Guidance, Bardic Inspiration, etc.)
   const [skillBonuses, setSkillBonuses] = useState({
@@ -103,6 +106,28 @@ export default function App() {
     }));
   };
 
+  // Consumables Logic
+  const addConsumable = () => {
+    setConsumables(prev => [...prev, { id: Date.now(), name: '', count: 1 }]);
+  };
+
+  const updateConsumable = (id, field, value) => {
+    setConsumables(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const updateCurrency = (type, value) => {
+    setCurrency(prev => ({
+      ...prev,
+      [type]: Math.max(0, parseInt(value) || 0)
+    }));
+  };
+
+  const removeConsumable = (id) => {
+    setConsumables(prev => prev.filter(item => item.id !== id));
+  };
+
   // Helper to calculate D&D 5e Modifier: floor((score - 10) / 2)
   const calculateModifier = (score) => Math.floor((score - 10) / 2);
 
@@ -120,6 +145,9 @@ export default function App() {
       characterName,
       stats,
       pb,
+      inventory,
+      consumables,
+      currency,
       profs: Array.from(profs) // Convert Set to Array for JSON
     };
     
@@ -157,6 +185,9 @@ export default function App() {
         if (data.characterName !== undefined) setCharacterName(data.characterName);
         if (data.stats) setStats(data.stats);
         if (data.pb) setPb(data.pb);
+        if (data.inventory !== undefined) setInventory(data.inventory);
+        if (data.currency) setCurrency(data.currency);
+        if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
         if (data.profs && Array.isArray(data.profs)) {
           setProfs(new Set(data.profs));
         }
@@ -358,6 +389,7 @@ export default function App() {
           <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-700">
             <button onClick={() => setActiveTab('dice')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'dice' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Dice</button>
             <button onClick={() => setActiveTab('skills')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'skills' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Skills</button>
+            <button onClick={() => setActiveTab('inventory')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Inv</button>
           </div>
 
           <button onClick={() => setShowHistory(!showHistory)} className={`p-2 rounded-full transition-colors ${showHistory ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}><History className="w-6 h-6" /></button>
@@ -400,12 +432,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Global Controls */}
-        <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 flex gap-1 shadow-sm">
-          <button onClick={() => setRollMode('normal')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'normal' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50'}`}>Normal</button>
-          <button onClick={() => setRollMode('advantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'advantage' ? 'bg-green-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'}`}>Advantage</button>
-          <button onClick={() => setRollMode('disadvantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'disadvantage' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-red-400'}`}>Disadvantage</button>
-        </div>
+        {/* Global Controls - Show only when NOT in inventory */}
+        {activeTab !== 'inventory' && (
+          <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 flex gap-1 shadow-sm">
+            <button onClick={() => setRollMode('normal')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'normal' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50'}`}>Normal</button>
+            <button onClick={() => setRollMode('advantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'advantage' ? 'bg-green-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'}`}>Advantage</button>
+            <button onClick={() => setRollMode('disadvantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'disadvantage' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-red-400'}`}>Disadvantage</button>
+          </div>
+        )}
 
         {/* DICE TAB */}
         {activeTab === 'dice' && (
@@ -578,6 +612,80 @@ export default function App() {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* INVENTORY TAB */}
+        {activeTab === 'inventory' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 h-full flex flex-col">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                {/* Column 1: Currency & Consumables */}
+                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col min-h-[400px]">
+                    
+                    {/* Currency Section */}
+                    <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2 mb-3">
+                        <Coins className="w-5 h-5 text-yellow-500" /> Currency
+                    </h2>
+                    <div className="grid grid-cols-5 gap-2 mb-6 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
+                        {['cp', 'sp', 'ep', 'gp', 'pp'].map(type => (
+                            <div key={type} className="flex flex-col items-center">
+                                <label className={`text-[10px] font-bold uppercase mb-1 ${
+                                  type === 'cp' ? 'text-orange-700' : 
+                                  type === 'sp' ? 'text-slate-400' : 
+                                  type === 'ep' ? 'text-blue-200' : 
+                                  type === 'gp' ? 'text-yellow-500' : 'text-slate-200'
+                                }`}>{type}</label>
+                                <input
+                                    type="number"
+                                    value={currency[type]}
+                                    onChange={(e) => updateCurrency(type, e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-600 rounded text-center font-mono font-bold text-white text-sm py-1 outline-none focus:border-orange-500 transition-colors"
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4 pt-4 border-t border-slate-700">
+                        <Sparkles className="w-5 h-5 text-orange-400" /> Consumables
+                    </h2>
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                        {consumables.map(item => (
+                            <div key={item.id} className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700">
+                                <input 
+                                    type="text" 
+                                    value={item.name}
+                                    onChange={(e) => updateConsumable(item.id, 'name', e.target.value)}
+                                    placeholder="Item name"
+                                    className="flex-1 bg-transparent text-white text-sm outline-none placeholder-slate-600 font-medium"
+                                />
+                                <div className="flex items-center gap-1 bg-slate-800 rounded border border-slate-600">
+                                    <button onClick={() => updateConsumable(item.id, 'count', Math.max(0, item.count - 1))} className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">-</button>
+                                    <span className="text-sm font-mono w-6 text-center font-bold text-orange-400">{item.count}</span>
+                                    <button onClick={() => updateConsumable(item.id, 'count', item.count + 1)} className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">+</button>
+                                </div>
+                                <button onClick={() => removeConsumable(item.id)} className="text-slate-600 hover:text-red-400 ml-1 transition-colors"><X className="w-4 h-4" /></button>
+                            </div>
+                        ))}
+                        <button onClick={addConsumable} className="w-full py-2.5 border-2 border-dashed border-slate-700 rounded-lg text-slate-500 hover:border-slate-500 hover:text-slate-300 text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-slate-800/50 mt-2">
+                            <Plus className="w-4 h-4" /> Add Item
+                        </button>
+                    </div>
+                </div>
+
+                {/* Column 2: General Inventory */}
+                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col min-h-[400px]">
+                    <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4">
+                        <Package className="w-5 h-5 text-orange-400" /> Equipment & Notes
+                    </h2>
+                    <textarea
+                        value={inventory}
+                        onChange={(e) => setInventory(e.target.value)}
+                        placeholder="Armor, weapons, gold, and other notes..."
+                        className="flex-1 w-full bg-slate-900 border border-slate-600 rounded-lg p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-mono text-sm resize-none leading-relaxed"
+                        spellCheck={false}
+                    />
+                </div>
             </div>
           </div>
         )}

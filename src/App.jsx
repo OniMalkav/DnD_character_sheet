@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine, Package, Coins, ScrollText } from 'lucide-react';
+import { Dices, RotateCcw, Trash2, History, X, Sparkles, Skull, User, Check, Plus, Download, Upload, PenLine, Package, Coins, ScrollText, Book, Flame } from 'lucide-react';
 
 const DICE_TYPES = [
   { type: 'd4', sides: 4, color: 'bg-red-600', hover: 'hover:bg-red-700' },
@@ -33,7 +33,7 @@ const SKILLS_DATA = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills' | 'inventory' | 'character'
+  const [activeTab, setActiveTab] = useState('dice'); // 'dice' | 'skills' | 'inventory' | 'character' | 'spells'
   
   // Dice State
   const [counts, setCounts] = useState({
@@ -64,6 +64,23 @@ export default function App() {
     xp: 0,
     feats: '' // Feats & Traits
   });
+
+  // Spellcasting State
+  const [spellAbility, setSpellAbility] = useState('int'); // 'int', 'wis', 'cha'
+  const [spellSlots, setSpellSlots] = useState({
+    1: { max: 4, used: 0 },
+    2: { max: 3, used: 0 },
+    3: { max: 3, used: 0 },
+    4: { max: 3, used: 0 },
+    5: { max: 3, used: 0 },
+    6: { max: 2, used: 0 },
+    7: { max: 2, used: 0 },
+    8: { max: 1, used: 0 },
+    9: { max: 1, used: 0 },
+  });
+  const [spells, setSpells] = useState([]); // { id, name, level }
+  const [newSpellName, setNewSpellName] = useState('');
+  const [newSpellLevel, setNewSpellLevel] = useState('0');
   
   // Skill Bonus Dice (Guidance, Bardic Inspiration, etc.)
   const [skillBonuses, setSkillBonuses] = useState({
@@ -145,6 +162,51 @@ export default function App() {
     setConsumables(prev => prev.filter(item => item.id !== id));
   };
 
+  // Spell Logic
+  const addSpell = () => {
+    if (!newSpellName.trim()) return;
+    setSpells(prev => [...prev, { id: Date.now(), name: newSpellName, level: parseInt(newSpellLevel) }]);
+    setNewSpellName('');
+  };
+
+  const removeSpell = (id) => {
+    setSpells(prev => prev.filter(s => s.id !== id));
+  };
+
+  const updateSpellSlotMax = (level, max) => {
+    setSpellSlots(prev => ({
+      ...prev,
+      [level]: { ...prev[level], max: parseInt(max) || 0 }
+    }));
+  };
+
+  const toggleSpellSlot = (level, slotIndex) => {
+    setSpellSlots(prev => {
+      const currentUsed = prev[level].used;
+      // If clicking a slot that is already "used" (or simpler logic: just increment/decrement)
+      // Let's make it intuitive: Clicking a bubble sets the 'used' count.
+      // If I click the 3rd bubble (index 2), it means I have used 3 slots.
+      // If I click the 3rd bubble and it's already filled, maybe unfill it?
+      // Simplest: Click a bubble to toggle it specifically? No, slots are consumed sequentially usually.
+      // Let's just do: Click bubble N -> Sets used to N. If used is already N, set to N-1.
+      const newUsed = (slotIndex + 1) === currentUsed ? slotIndex : slotIndex + 1;
+      return {
+        ...prev,
+        [level]: { ...prev[level], used: newUsed }
+      };
+    });
+  };
+
+  const longRest = () => {
+    setSpellSlots(prev => {
+      const reset = {};
+      Object.keys(prev).forEach(lvl => {
+        reset[lvl] = { ...prev[lvl], used: 0 };
+      });
+      return reset;
+    });
+  };
+
   // Helper to calculate D&D 5e Modifier: floor((score - 10) / 2)
   const calculateModifier = (score) => Math.floor((score - 10) / 2);
 
@@ -166,6 +228,9 @@ export default function App() {
       inventory,
       consumables,
       currency,
+      spellAbility,
+      spellSlots,
+      spells,
       profs: Array.from(profs) // Convert Set to Array for JSON
     };
     
@@ -201,15 +266,18 @@ export default function App() {
         
         // Basic validation and update
         if (data.characterName !== undefined) setCharacterName(data.characterName);
-        
-        // Safe merge for charInfo to support older save files
         if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
-        
         if (data.stats) setStats(data.stats);
         if (data.pb) setPb(data.pb);
         if (data.inventory !== undefined) setInventory(data.inventory);
         if (data.currency) setCurrency(data.currency);
         if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
+        
+        // Spells Import
+        if (data.spellAbility) setSpellAbility(data.spellAbility);
+        if (data.spellSlots) setSpellSlots(data.spellSlots);
+        if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
+
         if (data.profs && Array.isArray(data.profs)) {
           setProfs(new Set(data.profs));
         }
@@ -308,7 +376,7 @@ export default function App() {
       };
 
       setResult(resultObj);
-      setHistory(prev => [resultObj, ...prev].slice(0, 50));
+      setHistory(prev => [resultObj, ...prev].slice(0, 10));
       setIsRolling(false);
 
       if (hasNat20) setSpecialEffect('crit');
@@ -413,6 +481,7 @@ export default function App() {
             <button onClick={() => setActiveTab('skills')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'skills' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Skills</button>
             <button onClick={() => setActiveTab('inventory')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'inventory' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Inv</button>
             <button onClick={() => setActiveTab('character')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'character' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Char</button>
+            <button onClick={() => setActiveTab('spells')} className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all ${activeTab === 'spells' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Spells</button>
           </div>
 
           <button onClick={() => setShowHistory(!showHistory)} className={`p-2 rounded-full transition-colors ${showHistory ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}><History className="w-6 h-6" /></button>
@@ -455,8 +524,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Global Controls - Show only when NOT in inventory or character */}
-        {activeTab !== 'inventory' && activeTab !== 'character' && (
+        {/* Global Controls - Show only when NOT in inventory or character or spells */}
+        {['dice', 'skills'].includes(activeTab) && (
           <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 flex gap-1 shadow-sm">
             <button onClick={() => setRollMode('normal')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'normal' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50'}`}>Normal</button>
             <button onClick={() => setRollMode('advantage')} className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold uppercase transition-all ${rollMode === 'advantage' ? 'bg-green-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'}`}>Advantage</button>
@@ -869,8 +938,162 @@ export default function App() {
           </div>
         )}
 
+        {/* SPELLS TAB */}
+        {activeTab === 'spells' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Spellcasting Header */}
+            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ability</label>
+                  <select 
+                    value={spellAbility}
+                    onChange={(e) => setSpellAbility(e.target.value)}
+                    className="bg-slate-900 border border-slate-600 rounded-lg p-2 text-white font-bold outline-none focus:ring-2 focus:ring-orange-500/50"
+                  >
+                    <option value="int">Intelligence</option>
+                    <option value="wis">Wisdom</option>
+                    <option value="cha">Charisma</option>
+                  </select>
+                </div>
+                
+                <div className="flex flex-col items-center px-4 border-l border-slate-700">
+                  <span className="text-xs font-bold text-slate-400 uppercase">Save DC</span>
+                  <span className="text-2xl font-black text-orange-400">
+                    {8 + parseInt(pb) + calculateModifier(stats[spellAbility])}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center px-4 border-l border-slate-700">
+                  <span className="text-xs font-bold text-slate-400 uppercase">Attack</span>
+                  <span className="text-2xl font-black text-green-400">
+                    +{parseInt(pb) + calculateModifier(stats[spellAbility])}
+                  </span>
+                </div>
+              </div>
+
+              <button 
+                onClick={longRest}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all active:scale-95 w-full sm:w-auto justify-center"
+              >
+                <RotateCcw className="w-4 h-4" /> Long Rest
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Spell Slots */}
+              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 h-fit">
+                <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-indigo-400" /> Spell Slots
+                </h3>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => (
+                    <div key={level} className="flex items-center gap-4 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
+                      <span className="text-sm font-bold text-slate-400 w-12">Lvl {level}</span>
+                      
+                      {/* Max Slots Input */}
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="9"
+                        value={spellSlots[level].max}
+                        onChange={(e) => updateSpellSlotMax(level, e.target.value)}
+                        className="w-10 bg-slate-800 border border-slate-600 rounded text-center text-white font-bold"
+                      />
+
+                      {/* Bubbles */}
+                      <div className="flex gap-1.5 flex-1 flex-wrap">
+                        {Array.from({ length: spellSlots[level].max }).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => toggleSpellSlot(level, i)}
+                            className={`w-6 h-6 rounded-full border-2 transition-all ${
+                              i < spellSlots[level].used 
+                                ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' 
+                                : 'bg-slate-900 border-slate-600 hover:border-slate-400'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Spellbook */}
+              <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col min-h-[500px]">
+                <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4">
+                  <Book className="w-5 h-5 text-indigo-400" /> Spellbook
+                </h3>
+                
+                {/* Add Spell Form */}
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={newSpellName}
+                    onChange={(e) => setNewSpellName(e.target.value)}
+                    placeholder="Spell Name"
+                    className="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    onKeyDown={(e) => e.key === 'Enter' && addSpell()}
+                  />
+                  <select
+                    value={newSpellLevel}
+                    onChange={(e) => setNewSpellLevel(e.target.value)}
+                    className="bg-slate-900 border border-slate-600 rounded-lg px-2 text-white text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  >
+                    <option value="0">Cantrip</option>
+                    {[1,2,3,4,5,6,7,8,9].map(n => <option key={n} value={n}>Lvl {n}</option>)}
+                  </select>
+                  <button 
+                    onClick={addSpell}
+                    disabled={!newSpellName.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white p-2 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Spell List */}
+                <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(lvl => {
+                    const levelSpells = spells.filter(s => s.level === lvl);
+                    if (levelSpells.length === 0) return null;
+
+                    return (
+                      <div key={lvl}>
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-700 mb-2 pb-1">
+                          {lvl === 0 ? 'Cantrips' : `Level ${lvl}`}
+                        </div>
+                        <div className="space-y-1">
+                          {levelSpells.map(spell => (
+                            <div key={spell.id} className="group flex justify-between items-center bg-slate-900/50 hover:bg-slate-900 px-3 py-2 rounded border border-transparent hover:border-slate-600 transition-all">
+                              <span className="text-slate-200 font-medium">{spell.name}</span>
+                              <button 
+                                onClick={() => removeSpell(spell.id)}
+                                className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {spells.length === 0 && (
+                    <div className="text-center text-slate-500 py-10 italic">
+                      No spells added yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results Area */}
-        {result && activeTab !== 'inventory' && activeTab !== 'character' && (
+        {result && activeTab !== 'inventory' && activeTab !== 'character' && activeTab !== 'spells' && (
           <div ref={resultsRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-20">
             <div className={`bg-slate-800 rounded-2xl border-2 overflow-hidden shadow-2xl transition-colors duration-300 ${specialEffect === 'crit' ? 'border-yellow-500/50 ring-2 ring-yellow-500/20' : specialEffect === 'fail' ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-slate-600'}`}>
               

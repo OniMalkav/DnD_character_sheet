@@ -1,8 +1,7 @@
 "use client";
 
-import { History, X } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { Button } from '@/components/ui/button';
+import { History } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from '@/components/ui/badge';
 import type { RollResult } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,11 +21,6 @@ export default function HistoryPanel({ history, showHistory, setShowHistory }: H
             <History className="w-5 h-5 text-muted-foreground" />
             Roll History
           </SheetTitle>
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon">
-              <X className="w-6 h-6" />
-            </Button>
-          </SheetClose>
         </SheetHeader>
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-3">

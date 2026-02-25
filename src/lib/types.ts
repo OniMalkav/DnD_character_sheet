@@ -33,7 +33,11 @@ export type Spell = {
   level: number;
 };
 
-export type SpellSlots = Record<string, { max: number; used: number }>;
+export type SpellSlotState = {
+  max: number;
+  slots: boolean[]; // true = used
+};
+export type SpellSlots = Record<string, SpellSlotState>;
 
 export type DiceType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100';
 

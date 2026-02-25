@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useState, useContext, useRef, useCallback } from 'react';
+import React, { createContext, useState, useContext, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import type { Stats, CharInfo, Currency, Consumable, Spell, SpellSlots, Stat } from '@/lib/types';
+import type { Stats, CharInfo, Currency, Consumable, Spell, SpellSlots, Stat, SpellSlotState } from '@/lib/types';
 
 type CharacterContextType = {
   characterName: string;
@@ -53,9 +53,15 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [charInfo, setCharInfo] = useState<CharInfo>({ race: '', class: '', level: 1, class2: '', level2: '', background: '', alignment: '', xp: 0, feats: '' });
   const [spellAbility, setSpellAbility] = useState<Stat>('int');
   const [spellSlots, setSpellSlots] = useState<SpellSlots>({
-    '1': { max: 4, used: 0 }, '2': { max: 3, used: 0 }, '3': { max: 0, used: 0 },
-    '4': { max: 0, used: 0 }, '5': { max: 0, used: 0 }, '6': { max: 0, used: 0 },
-    '7': { max: 0, used: 0 }, '8': { max: 0, used: 0 }, '9': { max: 0, used: 0 },
+    '1': { max: 4, slots: Array(4).fill(false) },
+    '2': { max: 3, slots: Array(3).fill(false) },
+    '3': { max: 0, slots: [] },
+    '4': { max: 0, slots: [] },
+    '5': { max: 0, slots: [] },
+    '6': { max: 0, slots: [] },
+    '7': { max: 0, slots: [] },
+    '8': { max: 0, slots: [] },
+    '9': { max: 0, slots: [] },
   });
   const [spells, setSpells] = useState<Spell[]>([]);
 
@@ -83,21 +89,49 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSpells(prev => [...prev, { id: Date.now(), name, level }].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)));
   };
   const removeSpell = (id: number) => setSpells(prev => prev.filter(s => s.id !== id));
+  
   const updateSpellSlotMax = (level: string, max: number) => {
-    setSpellSlots(prev => ({ ...prev, [level]: { ...prev[level], max: Math.max(0, max || 0) } }));
-  };
-  const toggleSpellSlot = (level: string, slotIndex: number) => {
+    const newMax = Math.max(0, max || 0);
     setSpellSlots(prev => {
-      const currentUsed = prev[level].used;
-      const newUsed = (slotIndex + 1) === currentUsed ? slotIndex : slotIndex + 1;
-      return { ...prev, [level]: { ...prev[level], used: newUsed } };
+      const currentSlots = prev[level]?.slots || [];
+      const newSlots = Array(newMax);
+      for (let i = 0; i < newMax; i++) {
+        newSlots[i] = !!currentSlots[i];
+      }
+      return {
+        ...prev,
+        [level]: {
+          max: newMax,
+          slots: newSlots,
+        }
+      };
     });
   };
+
+  const toggleSpellSlot = (level: string, slotIndex: number) => {
+    setSpellSlots(prev => {
+      const newSlots = [...prev[level].slots];
+      if (newSlots[slotIndex] !== undefined) {
+        newSlots[slotIndex] = !newSlots[slotIndex];
+      }
+      return {
+        ...prev,
+        [level]: {
+          ...prev[level],
+          slots: newSlots
+        }
+      };
+    });
+  };
+  
   const longRest = () => {
     setSpellSlots(prev => {
       const reset = { ...prev };
       Object.keys(reset).forEach(lvl => {
-        reset[lvl] = { ...reset[lvl], used: 0 };
+        reset[lvl] = {
+          ...reset[lvl],
+          slots: Array(reset[lvl].max).fill(false)
+        };
       });
       return reset;
     });
@@ -139,7 +173,29 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.currency) setCurrency(data.currency);
         if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
         if (data.spellAbility) setSpellAbility(data.spellAbility);
-        if (data.spellSlots) setSpellSlots(data.spellSlots);
+        
+        if (data.spellSlots) {
+          const importedSlots = data.spellSlots;
+          const firstLevelKey = Object.keys(importedSlots)[0];
+          // Convert old format if necessary
+          if (firstLevelKey && importedSlots[firstLevelKey].hasOwnProperty('used')) {
+            const convertedSlots: SpellSlots = {};
+            for (const level in importedSlots) {
+              if (importedSlots.hasOwnProperty(level)) {
+                const { max, used } = importedSlots[level];
+                const newSlots = Array(max).fill(false);
+                for (let i = 0; i < used; i++) {
+                  newSlots[i] = true; // Mark as used
+                }
+                convertedSlots[level] = { max, slots: newSlots };
+              }
+            }
+            setSpellSlots(convertedSlots);
+          } else {
+            setSpellSlots(importedSlots);
+          }
+        }
+
         if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
         if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
         

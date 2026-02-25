@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Book, Plus, RotateCcw, Sparkles, Trash2 } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { calculateModifier } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -58,7 +58,7 @@ export default function SpellsTab() {
               <span className="text-3xl font-black text-green-400 font-headline">+{spellAttackMod}</span>
             </div>
           </div>
-          <Button onClick={longRest} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button onClick={longRest} className="w-full sm:w-auto">
             <RotateCcw className="w-4 h-4 mr-2" /> Long Rest
           </Button>
         </CardContent>
@@ -67,7 +67,7 @@ export default function SpellsTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-accent" /> Spell Slots</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Spell Slots</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -86,7 +86,7 @@ export default function SpellsTab() {
                         onClick={() => toggleSpellSlot(level, i)}
                         className={cn(
                           "spell-slot-button",
-                          i < slots.used
+                          slots.slots?.[i]
                             ? 'spell-slot-button--used'
                             : 'spell-slot-button--available'
                         )}
@@ -102,7 +102,7 @@ export default function SpellsTab() {
 
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Book className="w-5 h-5 text-accent" /> Spellbook</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Book className="w-5 h-5" /> Spellbook</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="flex gap-2 mb-4">
@@ -116,7 +116,7 @@ export default function SpellsTab() {
                   {[1,2,3,4,5,6,7,8,9].map(n => <SelectItem key={n} value={String(n)}>Lvl {n}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button onClick={handleAddSpell} disabled={!newSpellName.trim()} size="icon" className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button onClick={handleAddSpell} disabled={!newSpellName.trim()} size="icon">
                 <Plus className="w-5 h-5" />
               </Button>
             </div>

@@ -4,30 +4,61 @@
 
 @layer base {
   :root {
-    --background: 25 21% 15%;
-    --foreground: 0 0% 98%;
-    --card: 25 21% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 25 21% 12%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 29 91% 55%;
-    --primary-foreground: 25 21% 10%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 85%;
-    --accent: 240 70% 50%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 22%;
-    --ring: 29 91% 55%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* App background */
+    --background: 48 36 30;
+    /* Default text color */
+    --foreground: 250 250 250;
+
+    /* Card backgrounds */
+    --card: 38 29 24;
+    /* Text on cards */
+    --card-foreground: 250 250 250;
+
+    /* Popover backgrounds (used for dropdowns, etc.) */
+    --popover: 38 29 24;
+    /* Text on popovers */
+    --popover-foreground: 250 250 250;
+
+    /* Primary brand color (Adventurous Orange) */
+    --primary: 244 140 37;
+    /* Text on primary-colored elements */
+    --primary-foreground: 32 24 20;
+
+    /* Secondary elements background */
+    --secondary: 38 38 38;
+    /* Text on secondary elements */
+    --secondary-foreground: 250 250 250;
+
+    /* Muted elements background */
+    --muted: 38 38 38;
+    /* Muted text color */
+    --muted-foreground: 217 217 217;
+
+    /* Accent color for magical elements (Indigo) */
+    --accent: 38 38 217;
+    /* Text on accent-colored elements */
+    --accent-foreground: 250 250 250;
+
+    /* Destructive/error elements background */
+    --destructive: 136 29 29;
+    /* Text on destructive elements */
+    --destructive-foreground: 250 250 250;
+
+    /* Border color for elements */
+    --border: 51 51 51;
+    /* Input field background */
+    --input: 56 56 56;
+    /* Focus ring color */
+    --ring: 244 140 37;
+
+    /* Chart colors */
+    --chart-1: 242 126 85;
+    --chart-2: 42 157 137;
+    --chart-3: 38 77 98;
+    --chart-4: 245 203 90;
+    --chart-5: 249 161 93;
+    
+    /* Corner radius for elements like cards, inputs */
     --radius: 0.5rem;
   }
 }

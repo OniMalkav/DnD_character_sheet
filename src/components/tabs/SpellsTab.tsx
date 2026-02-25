@@ -72,7 +72,7 @@ export default function SpellsTab() {
           <CardContent>
             <div className="space-y-3">
               {Object.entries(spellSlots).map(([level, slots]) => (
-                <div key={level} className="flex items-center gap-4 bg-background-op-50 p-2 rounded-lg border">
+                <div key={level} className="flex items-center gap-4 bg-background/50 p-2 rounded-lg border">
                   <span className="text-sm font-bold text-muted-foreground w-12">Lvl {level}</span>
                   <Input 
                     type="number" min="0" max="9" value={slots.max}

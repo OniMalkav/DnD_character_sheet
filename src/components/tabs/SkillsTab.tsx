@@ -76,6 +76,7 @@ export default function SkillsTab({
             
             let bonusDiceSum = 0;
             const bonusDiceRolls: { [key: string]: number[] } = {};
+            const bonusDiceDetails: string[] = [];
 
             Object.entries(skillBonuses).forEach(([die, active]) => {
                 if (active) {
@@ -84,6 +85,7 @@ export default function SkillsTab({
                     bonusDiceSum += roll;
                     if (!bonusDiceRolls[die]) bonusDiceRolls[die] = [];
                     bonusDiceRolls[die].push(roll);
+                    bonusDiceDetails.push(`${roll} (${die})`);
                 }
             });
 
@@ -109,7 +111,7 @@ export default function SkillsTab({
                 hitMod: totalMod,
                 dmgMod: 0,
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                detailsStr: `1d20 + ${totalMod} (Skill) ${bonusDiceSum > 0 ? `+ ${bonusDiceSum} (Bonus)` : ''}`,
+                detailsStr: `1d20 + ${totalMod} (Skill) ${bonusDiceDetails.length > 0 ? `+ ${bonusDiceDetails.join(' + ')}` : ''}`,
                 rollMode,
                 label: `${skill.name} Check`
             };
@@ -132,8 +134,16 @@ export default function SkillsTab({
             <Card>
                 <CardContent className="p-2 flex gap-1">
                     <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase font-bold">Normal</Button>
-                    <Button onClick={() => setRollMode('advantage')} variant={rollMode === 'advantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'advantage' ? 'bg-green-700 hover:bg-green-800 text-white' : 'hover:bg-green-800/50 hover:text-green-300')}>Advantage</Button>
-                    <Button onClick={() => setRollMode('disadvantage')} variant={rollMode === 'disadvantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'disadvantage' ? 'bg-red-700 hover:bg-red-800 text-white' : 'hover:bg-red-800/50 hover:text-red-300')}>Disadvantage</Button>
+                    <Button 
+                        onClick={() => setRollMode('advantage')} 
+                        variant={rollMode === 'advantage' ? 'success' : 'ghost'} 
+                        className={cn("flex-1 uppercase font-bold", rollMode !== 'advantage' && "text-success hover:bg-success/20 hover:text-success")}
+                    >Advantage</Button>
+                    <Button 
+                        onClick={() => setRollMode('disadvantage')} 
+                        variant={rollMode === 'disadvantage' ? 'destructive' : 'ghost'} 
+                        className={cn("flex-1 uppercase font-bold", rollMode !== 'disadvantage' && "text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                    >Disadvantage</Button>
                 </CardContent>
             </Card>
             

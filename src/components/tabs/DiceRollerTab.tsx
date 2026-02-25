@@ -138,8 +138,16 @@ export default function DiceRollerTab({
             <Card>
                 <CardContent className="p-2 flex gap-1">
                     <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase font-bold">Normal</Button>
-                    <Button onClick={() => setRollMode('advantage')} variant={rollMode === 'advantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'advantage' ? 'bg-green-700 hover:bg-green-800 text-white' : 'hover:bg-green-800/50 hover:text-green-300')}>Advantage</Button>
-                    <Button onClick={() => setRollMode('disadvantage')} variant={rollMode === 'disadvantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'disadvantage' ? 'bg-red-700 hover:bg-red-800 text-white' : 'hover:bg-red-800/50 hover:text-red-300')}>Disadvantage</Button>
+                    <Button 
+                        onClick={() => setRollMode('advantage')} 
+                        variant={rollMode === 'advantage' ? 'success' : 'ghost'} 
+                        className={cn("flex-1 uppercase font-bold", rollMode !== 'advantage' && "text-success hover:bg-success/20 hover:text-success")}
+                    >Advantage</Button>
+                    <Button 
+                        onClick={() => setRollMode('disadvantage')} 
+                        variant={rollMode === 'disadvantage' ? 'destructive' : 'ghost'} 
+                        className={cn("flex-1 uppercase font-bold", rollMode !== 'disadvantage' && "text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                    >Disadvantage</Button>
                 </CardContent>
             </Card>
 

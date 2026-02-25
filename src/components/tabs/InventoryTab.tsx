@@ -25,7 +25,7 @@ export default function InventoryTab() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col">
-          <div className="grid grid-cols-5 gap-2 mb-6 bg-background-op-50 p-2 rounded-lg border">
+          <div className="grid grid-cols-5 gap-2 mb-6 bg-background/50 p-2 rounded-lg border">
             {(['cp', 'sp', 'ep', 'gp', 'pp'] as const).map(type => (
               <div key={type} className="flex flex-col items-center">
                 <label className={cn("text-[10px] font-bold uppercase mb-1", {

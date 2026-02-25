@@ -1,0 +1,174 @@
+"use client";
+
+import { Dices, RotateCcw } from "lucide-react";
+import DiceGrid from "@/components/dice/DiceGrid";
+import RollControls from "@/components/dice/RollControls";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown } from "@/lib/types";
+
+type DiceRollerTabProps = {
+    counts: DiceCounts;
+    setCounts: React.Dispatch<React.SetStateAction<DiceCounts>>;
+    modifier: number;
+    setModifier: React.Dispatch<React.SetStateAction<number>>;
+    damageMod: number;
+    setDamageMod: React.Dispatch<React.SetStateAction<number>>;
+    rollMode: RollMode;
+    setRollMode: React.Dispatch<React.SetStateAction<RollMode>>;
+    isRolling: boolean;
+    setIsRolling: React.Dispatch<React.SetStateAction<boolean>>;
+    setResult: React.Dispatch<React.SetStateAction<RollResult | null>>;
+    setHistory: React.Dispatch<React.SetStateAction<RollResult[]>>;
+    setSpecialEffect: React.Dispatch<React.SetStateAction<'crit' | 'fail' | null>>;
+    result: RollResult | null;
+}
+
+export default function DiceRollerTab({ 
+    counts, setCounts, modifier, setModifier, damageMod, setDamageMod, rollMode, setRollMode, 
+    isRolling, setIsRolling, setResult, setHistory, setSpecialEffect, result
+}: DiceRollerTabProps) {
+
+    const updateCount = (dieType: DiceType, delta: number) => {
+        setCounts(prev => ({
+          ...prev,
+          [dieType]: Math.max(0, prev[dieType] + delta)
+        }));
+    };
+
+    const resetSelections = () => {
+        const hasInputs = Object.values(counts).some(v => v > 0) || modifier !== 0 || damageMod !== 0 || rollMode !== 'normal';
+        if (hasInputs) {
+          setCounts({ d4: 0, d6: 0, d8: 0, d10: 0, d12: 0, d20: 0, d100: 0 });
+          setModifier(0);
+          setDamageMod(0);
+          setRollMode('normal');
+        } else {
+          setResult(null);
+          setSpecialEffect(null);
+        }
+    };
+    
+    const rollDice = () => {
+        const totalDice = Object.values(counts).reduce((a, b) => a + b, 0);
+        if (totalDice === 0) return;
+    
+        setIsRolling(true);
+        setResult(null);
+        setSpecialEffect(null);
+        
+        setTimeout(() => {
+          let breakdown: RollBreakdown = {};
+          let rollDetails: string[] = [];
+          let hasNat20 = false, hasNat1 = false;
+          let d20Sum = 0, damageSum = 0, d20Count = 0;
+    
+          Object.entries(counts).forEach(([die, count]) => {
+            if (count > 0) {
+              const sides = parseInt(die.substring(1));
+              const dieRolls = [];
+              
+              for (let i = 0; i < count; i++) {
+                if (die === 'd20') {
+                    d20Count++;
+                    const r1 = Math.floor(Math.random() * sides) + 1;
+                    if (rollMode !== 'normal') {
+                        const r2 = Math.floor(Math.random() * sides) + 1;
+                        const kept = rollMode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
+                        const dropped = rollMode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
+                        dieRolls.push({ value: kept, dropped: dropped, mode: rollMode });
+                        d20Sum += kept;
+                    } else {
+                        dieRolls.push({ value: r1 });
+                        d20Sum += r1;
+                    }
+                } else {
+                    const roll = Math.floor(Math.random() * sides) + 1;
+                    dieRolls.push({ value: roll });
+                    damageSum += roll;
+                }
+              }
+              breakdown[die as DiceType] = dieRolls;
+    
+              if (die === 'd20') {
+                dieRolls.forEach(r => {
+                  if (r.value === 20 && !r.dropped) hasNat20 = true;
+                  if (r.value === 1 && !r.dropped) hasNat1 = true;
+                });
+              }
+    
+              const rollValues = dieRolls.map(r => r.value).join(', ');
+              const modeTag = (rollMode !== 'normal' && die === 'd20') ? ` (${rollMode.substring(0,3).toUpperCase()})` : '';
+              rollDetails.push(`${count}${die}${modeTag}: [${rollValues}]`);
+            }
+          });
+    
+          const resultObj: RollResult = {
+            total: (d20Sum + modifier) + (damageSum + damageMod),
+            totalHit: d20Sum + modifier,
+            totalDamage: damageSum + damageMod,
+            hasD20: d20Count > 0,
+            hasDamage: damageSum > 0 || damageMod !== 0,
+            damageRaw: damageSum,
+            breakdown,
+            hitMod: modifier,
+            dmgMod: damageMod,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            detailsStr: rollDetails.join(' + '),
+            rollMode,
+            label: null
+          };
+    
+          setResult(resultObj);
+          setHistory(prev => [resultObj, ...prev].slice(0, 20));
+          setIsRolling(false);
+    
+          if (d20Count > 0) {
+            if (hasNat20) setSpecialEffect('crit');
+            else if (hasNat1) setSpecialEffect('fail');
+          }
+        }, 600);
+    };
+
+    const hasSelections = Object.values(counts).some(v => v > 0) || modifier !== 0 || damageMod !== 0 || rollMode !== 'normal';
+
+    return (
+        <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+            <Card>
+                <CardContent className="p-2 flex gap-1">
+                    <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase">Normal</Button>
+                    <Button onClick={() => setRollMode('advantage')} variant={rollMode === 'advantage' ? 'secondary' : 'ghost'} className="flex-1 uppercase hover:bg-green-800/50 hover:text-green-300 data-[state=open]:bg-green-800">Advantage</Button>
+                    <Button onClick={() => setRollMode('disadvantage')} variant={rollMode === 'disadvantage' ? 'secondary' : 'ghost'} className="flex-1 uppercase hover:bg-red-800/50 hover:text-red-300">Disadvantage</Button>
+                </CardContent>
+            </Card>
+
+            <DiceGrid counts={counts} updateCount={updateCount} />
+
+            <RollControls 
+                modifier={modifier}
+                setModifier={setModifier}
+                damageMod={damageMod}
+                setDamageMod={setDamageMod}
+                resetSelections={() => resetSelections()}
+                hasSelections={hasSelections || result !== null}
+            />
+
+            <Button 
+                onClick={rollDice} 
+                disabled={!hasSelections || isRolling} 
+                className="w-full py-8 text-2xl uppercase tracking-widest shadow-xl transition-all transform active:scale-95"
+                size="lg"
+            >
+                {isRolling ? (
+                    <>
+                        <RotateCcw className="w-6 h-6 mr-3 animate-spin" /> Rolling...
+                    </>
+                ) : (
+                    <>
+                        <Dices className="w-8 h-8 mr-3" /> Roll
+                    </>
+                )}
+            </Button>
+        </div>
+    );
+}

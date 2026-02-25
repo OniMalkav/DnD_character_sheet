@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        code: ['monospace'],
+        body: ['PT Sans', 'sans-serif'],
+        headline: ['PT Sans', 'sans-serif'],
+        code: ['Source Code Pro', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -88,10 +88,24 @@ export default {
             height: '0',
           },
         },
+        shake: { 
+          '0%, 100%': { transform: 'translateX(0)' }, 
+          '20%': { transform: 'translateX(-4px) rotate(-1deg)' }, 
+          '40%': { transform: 'translateX(4px) rotate(1deg)' }, 
+          '60%': { transform: 'translateX(-4px) rotate(-1deg)' }, 
+          '80%': { transform: 'translateX(4px) rotate(1deg)' }, 
+        },
+        'pop-in': { 
+          '0%': { transform: 'scale(0)', opacity: '0' }, 
+          '70%': { transform: 'scale(1.2)', opacity: '1' }, 
+          '100%': { transform: 'scale(1)', opacity: '1' }, 
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+        'pop': 'pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
       },
     },
   },

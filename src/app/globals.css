@@ -6,61 +6,61 @@
   :root {
     /* --- Core Colors --- */
     /* App background: A very dark desaturated earthy color */
-    --background: #2E261F;
+    --background: 28 22 19;
     /* Default text color */
-    --foreground: #FFFFFF;
+    --foreground: 255 255 255;
 
     /* --- Component Colors --- */
     /* Card backgrounds */
-    --card: #2E261F; /* Using background color for a unified feel */
+    --card: 28 22 19; /* Using background color for a unified feel */
     /* Text on cards */
-    --card-foreground: #FFFFFF;
+    --card-foreground: 255 255 255;
 
     /* Popover backgrounds (used for dropdowns, etc.) */
-    --popover: #261D18; /* A slightly different dark shade for depth */
+    --popover: 38 29 24; /* A slightly different dark shade for depth */
     /* Text on popovers */
-    --popover-foreground: #FAFAFA;
+    --popover-foreground: 250 250 250;
 
     /* --- Brand & Action Colors --- */
     /* Primary brand color: A vibrant, adventurous orange */
-    --primary: #F48C25;
+    --primary: 244 140 37;
     /* Text on primary-colored elements */
-    --primary-foreground: #FFFFFF;
+    --primary-foreground: 255 255 255;
 
     /* Secondary elements background */
-    --secondary: #4A3F36; /* A lighter earthy tone */
+    --secondary: 74 63 54; /* A lighter earthy tone */
     /* Text on secondary elements */
-    --secondary-foreground: #FAFAFA;
+    --secondary-foreground: 250 250 250;
 
     /* Muted elements background */
-    --muted: #4A3F36; /* Same as secondary for consistency */
+    --muted: 74 63 54; /* Same as secondary for consistency */
     /* Muted text color */
-    --muted-foreground: #A8A29E; /* A lighter, less prominent text color */
+    --muted-foreground: 168 162 158; /* A lighter, less prominent text color */
 
     /* Accent color for magical elements: A magical indigo */
-    --accent: #2626DC;
+    --accent: 38 38 220;
     /* Text on accent-colored elements */
-    --accent-foreground: #FAFAFA;
+    --accent-foreground: 250 250 250;
 
     /* Destructive/error elements background */
-    --destructive: #991B1B; /* A deep red */
+    --destructive: 153 27 27; /* A deep red */
     /* Text on destructive elements */
-    --destructive-foreground: #FAFAFA;
+    --destructive-foreground: 250 250 250;
 
     /* --- UI Element Colors --- */
     /* Border color for elements */
-    --border: #4A3F36;
+    --border: 74 63 54;
     /* Input field background */
-    --input: #3a3028;
+    --input: 58 48 40;
     /* Focus ring color */
-    --ring: #F48C25;
+    --ring: 244 140 37;
     
     /* Chart colors */
-    --chart-1: #f27e55;
-    --chart-2: #2a9d89;
-    --chart-3: #264d62;
-    --chart-4: #f5cb5a;
-    --chart-5: #f9a15d;
+    --chart-1: 242 126 85;
+    --chart-2: 42 157 137;
+    --chart-3: 38 77 98;
+    --chart-4: 245 203 90;
+    --chart-5: 249 161 93;
     
     /* --- Sizing --- */
     /* Corner radius for elements like cards, inputs */
@@ -82,6 +82,10 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  .bg-background-op-50 {
+    background-color: rgba(46, 38, 31, 0.5);
+  }
 
   /* --- Spell Slot Button Styles --- */
 
@@ -92,21 +96,21 @@
 
   /* Style for an available (unused) spell slot */
   .spell-slot-button--available {
-    background-color: #4A3F3680; /* from: bg-muted/50 */
+    background-color: rgba(74, 63, 54, 0.5); /* from: bg-muted/50 */
     @apply border-border;
   }
 
   /* Hover effect for an available spell slot to provide feedback */
   .spell-slot-button--available:hover {
-    border-color: #FFFFFF80; /* from: border-foreground/50 */
+    border-color: rgba(255, 255, 255, 0.5); /* from: border-foreground/50 */
   }
 
   /* Style for an expended (used) spell slot */
   .spell-slot-button--used {
     /* Uses the accent color to show it's active */
     @apply bg-accent;
-    border-color: #2626DCCC; /* from: border-accent/80 */
+    border-color: rgba(255, 255, 255, 0.8); /* from: border-accent/80 */
     /* Adds a glow effect to make it pop */
-    box-shadow: 0 0 8px #2626DC;
+    box-shadow: 0 0 8px #ffffff;
   }
 }

@@ -70,34 +70,33 @@ export default function SpellsTab() {
             <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-accent" /> Spell Slots</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[450px] pr-3">
-              <div className="space-y-3">
-                {Object.entries(spellSlots).map(([level, slots]) => (
-                  <div key={level} className="flex items-center gap-4 bg-background/50 p-2 rounded-lg border">
-                    <span className="text-sm font-bold text-muted-foreground w-12">Lvl {level}</span>
-                    <Input 
-                      type="number" min="0" max="9" value={slots.max}
-                      onChange={(e) => updateSpellSlotMax(level, parseInt(e.target.value))}
-                      className="w-14 h-8 text-center"
-                    />
-                    <div className="flex gap-1.5 flex-1 flex-wrap">
-                      {Array.from({ length: slots.max }).map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => toggleSpellSlot(level, i)}
-                          className={cn("w-6 h-6 rounded-full border-2 transition-all",
-                            i < slots.used 
-                              ? 'bg-accent border-accent/80 shadow-[0_0_8px_hsl(var(--accent))]' 
-                              : 'bg-muted/50 border-border hover:border-foreground/50'
-                          )}
-                          aria-label={`Spell slot ${level}-${i+1}`}
-                        />
-                      ))}
-                    </div>
+            <div className="space-y-3">
+              {Object.entries(spellSlots).map(([level, slots]) => (
+                <div key={level} className="flex items-center gap-4 bg-background/50 p-2 rounded-lg border">
+                  <span className="text-sm font-bold text-muted-foreground w-12">Lvl {level}</span>
+                  <Input 
+                    type="number" min="0" max="9" value={slots.max}
+                    onChange={(e) => updateSpellSlotMax(level, parseInt(e.target.value))}
+                    className="w-14 h-8 text-center"
+                  />
+                  <div className="flex gap-1.5 flex-1 flex-wrap">
+                    {Array.from({ length: slots.max }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => toggleSpellSlot(level, i)}
+                        className={cn(
+                          "spell-slot-button",
+                          i < slots.used
+                            ? 'spell-slot-button--used'
+                            : 'spell-slot-button--available'
+                        )}
+                        aria-label={`Spell slot ${level}-${i+1}`}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

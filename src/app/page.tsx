@@ -8,13 +8,12 @@ import SkillsTab from '@/components/tabs/SkillsTab';
 import InventoryTab from '@/components/tabs/InventoryTab';
 import CharacterTab from '@/components/tabs/CharacterTab';
 import SpellsTab from '@/components/tabs/SpellsTab';
-import LoreGeneratorTab from '@/components/tabs/LoreGeneratorTab';
 import RollResult from '@/components/dice/RollResult';
 import HistoryPanel from '@/components/layout/HistoryPanel';
 import CritFailFX from '@/components/shared/CritFailFX';
 import type { RollResult as RollResultType, DiceCounts, RollMode, SkillBonus } from '@/lib/types';
 
-export type ActiveTab = 'dice' | 'skills' | 'inventory' | 'character' | 'spells' | 'lore';
+export type ActiveTab = 'dice' | 'skills' | 'inventory' | 'character' | 'spells';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dice');
@@ -83,7 +82,6 @@ export default function Home() {
     inventory: <InventoryTab />,
     character: <CharacterTab />,
     spells: <SpellsTab />,
-    lore: <LoreGeneratorTab />,
   };
   
   return (

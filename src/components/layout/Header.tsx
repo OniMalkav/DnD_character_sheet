@@ -17,7 +17,6 @@ const TABS: { id: ActiveTab; label: string }[] = [
     { id: 'inventory', label: 'Inv' },
     { id: 'character', label: 'Char' },
     { id: 'spells', label: 'Spells' },
-    { id: 'lore', label: 'Lore' },
 ];
 
 export default function Header({ activeTab, setActiveTab, setShowHistory }: HeaderProps) {

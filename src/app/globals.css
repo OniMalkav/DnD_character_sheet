@@ -5,14 +5,14 @@
 @layer base {
   :root {
     /* App background */
-    --background: #30241e;
+    --background: #4b4847;
     /* Default text color */
-    --foreground: #fafafa;
+    --foreground: #ffffff;
 
     /* Card backgrounds */
     --card: #261d18;
     /* Text on cards */
-    --card-foreground: #fafafa;
+    --card-foreground: #ffffff;
 
     /* Popover backgrounds (used for dropdowns, etc.) */
     --popover: #261d18;
@@ -20,12 +20,12 @@
     --popover-foreground: #fafafa;
 
     /* Primary brand color (Adventurous Orange) */
-    --primary: #f48c25;
+    --primary: #ff0000;
     /* Text on primary-colored elements */
-    --primary-foreground: #201814;
+    --primary-foreground: #ffffff;
 
     /* Secondary elements background */
-    --secondary: #262626;
+    --secondary: #ffffff7c;
     /* Text on secondary elements */
     --secondary-foreground: #fafafa;
 
@@ -35,7 +35,7 @@
     --muted-foreground: #d9d9d9;
 
     /* Accent color for magical elements (Indigo) */
-    --accent: #2626d9;
+    --accent: #ffffff7c;
     /* Text on accent-colored elements */
     --accent-foreground: #fafafa;
 

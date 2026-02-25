@@ -27,6 +27,7 @@ const getCalculationData = (breakdown: RollBreakdown) => {
 export default function RollResult({ result, specialEffect }: RollResultProps) {
   const isD20Roll = result.hasD20;
   const calcData = getCalculationData(result.breakdown);
+  const isSkillCheck = !!result.label && result.label.endsWith(' Check');
 
   return (
     <div className={cn(
@@ -83,9 +84,12 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                <div className="text-muted-foreground font-code text-sm bg-background/50 px-3 py-1.5 rounded border border-border/50">
                   {calcData.naturalD20} (d20)
                   {result.hitMod !== 0 && (result.hitMod > 0 ? ` + ${result.hitMod} (mod)` : ` - ${Math.abs(result.hitMod)} (mod)`)}
+                  {isSkillCheck && calcData.otherDiceElements.map((item, idx) => (
+                    <React.Fragment key={idx}> + {item.value} ({item.type})</React.Fragment>
+                  ))}
                   <span className="text-foreground font-bold"> = {result.totalHit}</span>
                </div>
-               {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0) && (
+               {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0) && !isSkillCheck && (
                  <div className="flex flex-col items-center justify-center gap-1 mt-3 pt-3 border-t border-border/50 w-full">
                    <div className="flex items-center gap-2">
                      <Sword className="w-4 h-4 text-red-400" />

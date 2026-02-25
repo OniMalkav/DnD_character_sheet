@@ -93,7 +93,7 @@ export default function SkillsTab({
             const breakdown = {
                 d20: [{ value: d20roll, dropped: dropped, mode: rollMode }],
                 ...Object.entries(bonusDiceRolls).reduce((acc, [die, rolls]) => {
-                    acc[die] = rolls.map(value => ({ value }));
+                    acc[die as 'd4' | 'd6' | 'd8' | 'd10' | 'd12'] = rolls.map(value => ({ value }));
                     return acc;
                 }, {} as any)
             };
@@ -106,7 +106,7 @@ export default function SkillsTab({
                 hasDamage: false,
                 damageRaw: 0,
                 breakdown,
-                hitMod: totalMod + bonusDiceSum,
+                hitMod: totalMod,
                 dmgMod: 0,
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
                 detailsStr: `1d20 + ${totalMod} (Skill) ${bonusDiceSum > 0 ? `+ ${bonusDiceSum} (Bonus)` : ''}`,

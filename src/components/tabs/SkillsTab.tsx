@@ -131,9 +131,9 @@ export default function SkillsTab({
         <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
             <Card>
                 <CardContent className="p-2 flex gap-1">
-                    <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase">Normal</Button>
-                    <Button onClick={() => setRollMode('advantage')} variant={rollMode === 'advantage' ? 'secondary' : 'ghost'} className="flex-1 uppercase hover:bg-green-800/50 hover:text-green-300 data-[state=open]:bg-green-800">Advantage</Button>
-                    <Button onClick={() => setRollMode('disadvantage')} variant={rollMode === 'disadvantage' ? 'secondary' : 'ghost'} className="flex-1 uppercase hover:bg-red-800/50 hover:text-red-300">Disadvantage</Button>
+                    <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase font-bold">Normal</Button>
+                    <Button onClick={() => setRollMode('advantage')} variant={rollMode === 'advantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'advantage' ? 'bg-green-700 hover:bg-green-800 text-white' : 'hover:bg-green-800/50 hover:text-green-300')}>Advantage</Button>
+                    <Button onClick={() => setRollMode('disadvantage')} variant={rollMode === 'disadvantage' ? 'secondary' : 'ghost'} className={cn("flex-1 uppercase font-bold", rollMode === 'disadvantage' ? 'bg-red-700 hover:bg-red-800 text-white' : 'hover:bg-red-800/50 hover:text-red-300')}>Disadvantage</Button>
                 </CardContent>
             </Card>
             

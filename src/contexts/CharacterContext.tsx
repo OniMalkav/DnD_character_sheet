@@ -53,7 +53,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [charInfo, setCharInfo] = useState<CharInfo>({ race: '', class: '', level: 1, class2: '', level2: '', background: '', alignment: '', xp: 0, feats: '' });
   const [spellAbility, setSpellAbility] = useState<Stat>('int');
   const [spellSlots, setSpellSlots] = useState<SpellSlots>({
-    '1': { max: 2, used: 0 }, '2': { max: 1, used: 0 }, '3': { max: 0, used: 0 },
+    '1': { max: 4, used: 0 }, '2': { max: 3, used: 0 }, '3': { max: 0, used: 0 },
     '4': { max: 0, used: 0 }, '5': { max: 0, used: 0 }, '6': { max: 0, used: 0 },
     '7': { max: 0, used: 0 }, '8': { max: 0, used: 0 }, '9': { max: 0, used: 0 },
   });

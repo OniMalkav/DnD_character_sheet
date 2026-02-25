@@ -89,28 +89,31 @@
 
   /* --- Spell Slot Button Styles --- */
 
-  /* Base style for all spell slot buttons */
+  /* This is the base style for all spell slot buttons. */
   .spell-slot-button {
     @apply w-6 h-6 rounded-full border-2 transition-all;
   }
 
-  /* Style for an available (unused) spell slot */
+  /* This style represents an AVAILABLE spell slot. It's bright and glowing. */
   .spell-slot-button--available {
-    background-color: rgba(74, 63, 54, 0.5); /* from: bg-muted/50 */
+    @apply bg-accent; /* Uses the magical indigo color. */
+    border-color: rgba(250, 250, 250, 0.8); /* Bright border. */
+    box-shadow: 0 0 8px rgb(var(--accent)); /* Glow effect using the accent color. */
+  }
+
+  /* This adds a hover effect to an AVAILABLE slot to show it's interactive. */
+  .spell-slot-button--available:hover {
+    opacity: 0.8; /* Slightly dim the button on hover. */
+  }
+
+  /* This style represents a USED or EXPENDED spell slot. It's dim. */
+  .spell-slot-button--used {
+    background-color: rgba(74, 63, 54, 0.5); /* A transparent, muted color. */
     @apply border-border;
   }
-
-  /* Hover effect for an available spell slot to provide feedback */
-  .spell-slot-button--available:hover {
-    border-color: rgba(255, 255, 255, 0.5); /* from: border-foreground/50 */
-  }
-
-  /* Style for an expended (used) spell slot */
-  .spell-slot-button--used {
-    /* Uses the accent color to show it's active */
-    @apply bg-accent;
-    border-color: rgba(255, 255, 255, 0.8); /* from: border-accent/80 */
-    /* Adds a glow effect to make it pop */
-    box-shadow: 0 0 8px #ffffff;
+  
+  /* This adds a hover effect to a USED slot, hinting it can be restored. */
+  .spell-slot-button--used:hover {
+    border-color: rgba(255, 255, 255, 0.5); /* Brighten the border on hover. */
   }
 }

@@ -11,7 +11,7 @@ type RollResultProps = {
 };
 
 const getCalculationData = (breakdown: RollBreakdown) => {
-  const naturalD20 = breakdown.d20 ? breakdown.d20.reduce((acc, r) => acc + (r.dropped ? 0 : r.value), 0) : 0;
+  const naturalD20 = breakdown.d20 ? breakdown.d20.reduce((acc, r) => acc + (r.dropped !== undefined ? 0 : r.value), 0) : 0;
   
   const otherDiceElements: { type: string, value: number }[] = [];
   Object.entries(breakdown).forEach(([dieType, rolls]) => {
@@ -29,7 +29,8 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
   const calcData = getCalculationData(result.breakdown);
   const isSkillCheck = !!result.label && result.label.endsWith(' Check');
   const isMultiAttack = result.attacks && result.attacks.length > 1;
-  const hasCrit = result.breakdown.d20?.some(r => !r.dropped && r.value === 20);
+  const hasCrit = result.breakdown.d20?.some(r => r.value === 20 && r.dropped === undefined);
+  const isFumble = !isMultiAttack && result.breakdown.d20?.some(r => r.value === 1 && r.dropped === undefined);
 
   return (
     <div className={cn(
@@ -97,7 +98,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
              <div className={cn(
                 "text-7xl md:text-8xl font-black drop-shadow-lg tracking-tighter mb-4 font-headline",
                 hasCrit ? 'text-yellow-400 animate-pulse' :
-                result.breakdown.d20?.some(r => !r.dropped && r.value === 1) ? 'text-red-500' : 'text-foreground'
+                isFumble ? 'text-red-500' : 'text-foreground'
              )}>
                 {result.totalHit}
              </div>
@@ -123,7 +124,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                  ))}
                </div>
                <div className="text-muted-foreground font-code text-sm bg-background/50 px-3 py-1.5 rounded border border-border/50">
-                  {naturalD20} (d20)
+                  {result.breakdown.d20?.find(r => r.dropped === undefined)?.value} (d20)
                   {result.hitMod !== 0 && (result.hitMod > 0 ? ` + ${result.hitMod} (mod)` : ` - ${Math.abs(result.hitMod)} (mod)`)}
                   {isSkillCheck && calcData.otherDiceElements.map((item, idx) => (
                     <React.Fragment key={idx}> + {item.value} ({item.type})</React.Fragment>
@@ -133,6 +134,9 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                {hasCrit && !isSkillCheck && (
                  <div className="text-[10px] text-yellow-500 font-black uppercase tracking-[0.2em] mt-2 animate-pulse">Critical Hit! Damage Dice Doubled</div>
                )}
+               {isFumble && !isSkillCheck && (
+                 <div className="text-[10px] text-destructive font-black uppercase tracking-[0.2em] mt-2">Automatic Miss - No Damage</div>
+               )}
                {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0) && !isSkillCheck && (
                  <div className="flex flex-col items-center justify-center gap-1 mt-3 pt-3 border-t border-border/50 w-full">
                    <div className="flex items-center gap-2">
@@ -140,7 +144,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Damage</span>
                    </div>
                    <div className="flex items-center gap-2">
-                     <span className="text-3xl font-black text-foreground font-headline">{result.totalDamage}</span>
+                     <span className={cn("text-3xl font-black font-headline", isFumble ? "text-muted-foreground line-through" : "text-foreground")}>{result.totalDamage}</span>
                      <div className="text-xs text-muted-foreground font-code flex items-center">
                        ({calcData.otherDiceElements.map((item, idx) => (
                          <span key={idx} className="flex items-center">{idx > 0 && " + "}{item.value}</span>
@@ -176,7 +180,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                  {rolls?.map((r, i) => (
                     <div key={i} className={cn(
                       "w-8 h-8 flex items-center justify-center rounded border font-bold text-sm font-code transition-all",
-                      r.dropped ? 'opacity-30 line-through bg-muted border-transparent' : 'bg-background border-border/50 text-foreground',
+                      r.dropped !== undefined ? 'opacity-30 line-through bg-muted border-transparent' : 'bg-background border-border/50 text-foreground',
                       r.value === 20 ? 'text-yellow-400 border-yellow-500/50 shadow-[0_0_5px_rgba(234,179,8,0.2)]' : 
                       r.value === 1 ? 'text-red-400 border-red-500/50' : ''
                     )}>

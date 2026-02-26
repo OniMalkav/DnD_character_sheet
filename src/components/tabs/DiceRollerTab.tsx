@@ -5,7 +5,7 @@ import DiceGrid from "@/components/dice/DiceGrid";
 import RollControls from "@/components/dice/RollControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown, AttackResult, DieRoll } from "@/lib/types";
+import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown, AttackResult, DieRoll, DieRollWithMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type DiceRollerTabProps = {
@@ -49,6 +49,25 @@ export default function DiceRollerTab({
           setSpecialEffect(null);
         }
     };
+
+    // Helper: Internal logic for rolling a d20 based on the current mode
+    const rollD20 = (mode: RollMode) => {
+      const r1 = Math.floor(Math.random() * 20) + 1;
+      if (mode === 'normal') {
+        return { value: r1, isCrit: r1 === 20, isFumble: r1 === 1, details: `[${r1}]` };
+      }
+      const r2 = Math.floor(Math.random() * 20) + 1;
+      const kept = mode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
+      const dropped = mode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
+      const modeTag = mode === 'advantage' ? 'ADV' : 'DIS';
+      return { 
+        value: kept, 
+        dropped, 
+        isCrit: kept === 20, 
+        isFumble: kept === 1, 
+        details: `${modeTag}:[${kept}] drop:[${dropped}]`
+      };
+    };
     
     const rollDice = () => {
         const totalDice = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -65,17 +84,17 @@ export default function DiceRollerTab({
           let d20Sum = 0, damageSum = 0, d20Count = counts.d20;
           const attacks: AttackResult[] = [];
 
-          // EFFECT: Multi-Attack Logic
-          const isMultiAttack = rollMode === 'normal' && d20Count > 1;
+          // EFFECT: Multi-Attack Logic triggered if more than 1 d20 is rolled
+          const isMultiAttack = d20Count > 1;
 
           if (isMultiAttack) {
             let totalMultiDamage = 0;
             let hitsCount = 0;
 
             for (let i = 0; i < d20Count; i++) {
-              const d20Val = Math.floor(Math.random() * 20) + 1;
-              const isCrit = d20Val === 20;
-              const isFumble = d20Val === 1;
+              const d20Result = rollD20(rollMode);
+              const isCrit = d20Result.isCrit;
+              const isFumble = d20Result.isFumble;
               let attackDiceTotal = 0;
               let attackDamageDetails: string[] = [];
 
@@ -100,19 +119,18 @@ export default function DiceRollerTab({
               const attackTotalDamage = attackDiceTotal + damageMod;
 
               attacks.push({
-                hit: d20Val + modifier,
-                damage: attackTotalDamage,
-                d20Value: d20Val,
+                hit: d20Result.value + modifier,
+                damage: isFumble ? 0 : attackTotalDamage,
+                d20Value: d20Result.value,
                 isCrit: isCrit,
                 isFumble: isFumble,
-                // EFFECT: Added d20 to hit and modifier to the details for better visibility
-                detailsStr: `d20:[${d20Val}] + ${attackDamageDetails.join(' + ')}`
+                detailsStr: `${d20Result.details} + ${attackDamageDetails.join(' + ') || '0'}`
               });
 
-              if (d20Val === 20) hasNat20 = true;
-              if (d20Val === 1) hasNat1 = true;
+              if (isCrit) hasNat20 = true;
+              if (isFumble) hasNat1 = true;
               
-              d20Sum += d20Val;
+              d20Sum += d20Result.value;
               
               // EFFECT: Automatic Miss on Natural 1 - Damage excluded from total multi-damage calculation
               if (!isFumble) {
@@ -121,36 +139,22 @@ export default function DiceRollerTab({
               }
             }
             
-            damageSum = totalMultiDamage; // Multi-damage total already includes damageMod
+            damageSum = totalMultiDamage;
             breakdown.d20 = attacks.map(a => ({ value: a.d20Value }));
-            rollDetails.push(`${d20Count} Attacks Rolled (${hitsCount} Hits)`);
+            rollDetails.push(`${d20Count} Attacks (${hitsCount} Hits)`);
           } else {
             // STANDARD LOGIC (Single d20 or Adv/Dis)
             let critDoubling = false;
             let d20Rolls: DieRoll[] = [];
 
-            // 1. Roll d20 first to check for Critical Hit status
             if (d20Count > 0) {
-              const sides = 20;
-              for (let i = 0; i < d20Count; i++) {
-                const r1 = Math.floor(Math.random() * sides) + 1;
-                if (rollMode !== 'normal') {
-                  const r2 = Math.floor(Math.random() * sides) + 1;
-                  const kept = rollMode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
-                  const dropped = rollMode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
-                  d20Rolls.push({ value: kept, dropped, mode: rollMode });
-                  d20Sum += kept;
-                  if (kept === 20) critDoubling = true;
-                  if (kept === 1) hasNat1 = true;
-                } else {
-                  d20Rolls.push({ value: r1 });
-                  d20Sum += r1;
-                  if (r1 === 20) critDoubling = true;
-                  if (r1 === 1) hasNat1 = true;
-                }
-              }
-              breakdown.d20 = d20Rolls;
+              const d20Result = rollD20(rollMode);
+              d20Rolls.push({ value: d20Result.value, dropped: d20Result.dropped, mode: rollMode });
+              d20Sum += d20Result.value;
+              if (d20Result.isCrit) critDoubling = true;
+              if (d20Result.isFumble) hasNat1 = true;
               hasNat20 = critDoubling;
+              breakdown.d20 = d20Rolls;
             }
 
             // 2. Roll other dice (Damage/Modifier dice)
@@ -174,15 +178,15 @@ export default function DiceRollerTab({
               }
             });
 
-            // Prepend d20 info to roll details string
             if (d20Count > 0) {
-              const d20Vals = d20Rolls.map(r => r.value).join(', ');
+              const d20Result = d20Rolls[0];
               const modeTag = rollMode !== 'normal' ? ` (${rollMode.substring(0,3).toUpperCase()})` : '';
-              rollDetails.unshift(`${d20Count}d20${modeTag}: [${d20Vals}]`);
+              const valStr = d20Result.dropped !== undefined ? `[${d20Result.value}, drop ${d20Result.dropped}]` : `[${d20Result.value}]`;
+              rollDetails.unshift(`d20${modeTag}: ${valStr}`);
             }
           }
     
-          const finalTotalDamage = isMultiAttack ? damageSum : (damageSum + damageMod);
+          const finalTotalDamage = hasNat1 && !isMultiAttack ? 0 : (isMultiAttack ? damageSum : (damageSum + damageMod));
           const finalTotalHit = d20Sum + (modifier * (isMultiAttack ? d20Count : 1));
 
           const resultObj: RollResult = {

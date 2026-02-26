@@ -93,7 +93,7 @@ export default function DiceRollerTab({
                     rolls.push(r);
                     attackDiceTotal += r;
                   }
-                  attackDamageDetails.push(`${effectiveCount}${die}: [${rolls.join(',')}]`);
+                  attackDamageDetails.push(`${die}:[${rolls.join(',')}]`);
                 }
               });
 
@@ -105,7 +105,8 @@ export default function DiceRollerTab({
                 d20Value: d20Val,
                 isCrit: isCrit,
                 isFumble: isFumble,
-                detailsStr: `d20: [${d20Val}] + ${attackDamageDetails.join(' + ')}`
+                // EFFECT: Added d20 to hit and modifier to the details for better visibility
+                detailsStr: `d20:[${d20Val}] + ${attackDamageDetails.join(' + ')}`
               });
 
               if (d20Val === 20) hasNat20 = true;

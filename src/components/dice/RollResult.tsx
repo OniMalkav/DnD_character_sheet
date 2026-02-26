@@ -57,7 +57,10 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
             <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Multiple Attacks</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {result.attacks?.map((atk, idx) => (
-                <div key={idx} className="bg-background/50 border rounded-xl p-4 flex flex-col gap-2 relative">
+                <div key={idx} className={cn(
+                  "bg-background/50 border rounded-xl p-4 flex flex-col gap-2 relative transition-all",
+                  atk.isFumble && "border-destructive/30 opacity-60"
+                )}>
                   <div className="absolute top-2 left-3 text-[10px] font-black text-muted-foreground uppercase tracking-tighter opacity-50">#0{idx+1}</div>
                   <div className="flex justify-around items-center pt-2">
                     <div className="flex flex-col items-center">
@@ -69,12 +72,17 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                     <div className="w-px h-10 bg-border"></div>
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Damage</span>
-                      <div className="text-3xl font-black font-headline text-red-400">
+                      <div className={cn("text-3xl font-black font-headline", atk.isFumble ? 'text-muted-foreground line-through' : 'text-red-400')}>
                         {atk.damage}
                       </div>
                     </div>
                   </div>
-                  {atk.isCrit && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center mt-1 animate-pulse">Critical!</div>}
+                  {/* EFFECT: Detailed roll breakdown for multi-attack items */}
+                  <div className="text-[9px] font-code text-muted-foreground truncate px-2 text-center mt-1" title={atk.detailsStr}>
+                    {atk.detailsStr}
+                  </div>
+                  {atk.isCrit && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center animate-pulse">Critical!</div>}
+                  {atk.isFumble && <div className="text-[10px] text-destructive font-black uppercase tracking-widest text-center">Miss</div>}
                 </div>
               ))}
             </div>
@@ -159,12 +167,19 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
         )}
       </div>
 
-      {!isD20Roll && !isMultiAttack && (
+      {/* EFFECT: Show individual dice roll results for all non-multi attacks for full transparency */}
+      {!isMultiAttack && (
         <div className="p-4 bg-background/30 flex justify-center flex-wrap gap-2">
            {Object.entries(result.breakdown).map(([dieType, rolls]) => (
-              <div key={dieType} className="flex gap-2">
+              <div key={dieType} className="flex gap-2 items-center">
+                 <span className="text-[9px] font-bold text-muted-foreground uppercase mr-1">{dieType}</span>
                  {rolls?.map((r, i) => (
-                    <div key={i} className={cn("w-8 h-8 flex items-center justify-center rounded bg-muted text-muted-foreground font-bold text-sm font-code", r.dropped ? 'opacity-40 line-through' : '', r.value === 20 ? 'text-yellow-400' : r.value === 1 ? 'text-red-400' : '')}>
+                    <div key={i} className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded border font-bold text-sm font-code transition-all",
+                      r.dropped ? 'opacity-30 line-through bg-muted border-transparent' : 'bg-background border-border/50 text-foreground',
+                      r.value === 20 ? 'text-yellow-400 border-yellow-500/50 shadow-[0_0_5px_rgba(234,179,8,0.2)]' : 
+                      r.value === 1 ? 'text-red-400 border-red-500/50' : ''
+                    )}>
                        {r.value}
                     </div>
                  ))}

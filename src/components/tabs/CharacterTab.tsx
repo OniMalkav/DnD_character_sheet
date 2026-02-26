@@ -12,11 +12,12 @@ export default function CharacterTab() {
   const {
     characterName, setCharacterName,
     charInfo, updateCharInfo,
+    notes, setNotes,
     handleExport, handleImportClick
   } = useCharacter();
 
   return (
-    <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+    <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 space-y-6">
       <Card className="shadow-xl">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -95,6 +96,25 @@ export default function CharacterTab() {
               className="mt-1 font-code text-sm h-32 resize-y"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ADVENTURE NOTES moved from Inventory to Character Tab */}
+      <Card className="flex flex-col shadow-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ScrollText className="w-5 h-5 text-primary" /> Adventure Notes
+          </CardTitle>
+          <CardDescription>Keep track of session details, plot hooks, and backstory.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 flex min-h-[300px]">
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Start writing your adventure journal here..."
+            className="flex-1 w-full font-code text-sm resize-y leading-relaxed bg-background"
+            spellCheck={false}
+          />
         </CardContent>
       </Card>
     </div>

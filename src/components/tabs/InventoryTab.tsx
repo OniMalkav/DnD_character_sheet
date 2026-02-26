@@ -1,29 +1,27 @@
 "use client";
 
-import { Coins, Package, Plus, Sparkles, X, List, ScrollText, ShieldCheck } from 'lucide-react';
+import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Accordion, 
-  AccordionContent, 
   AccordionItem, 
-  AccordionTrigger 
+  AccordionTrigger,
+  AccordionContent 
 } from "@/components/ui/accordion";
 import { cn } from '@/lib/utils';
 
 export default function InventoryTab() {
   const { 
     currency, updateCurrency, 
-    consumables, addConsumable, updateConsumable, removeConsumable,
-    equipmentItems, addEquipmentItem, updateEquipmentItem, removeEquipmentItem,
-    inventoryItems, addInventoryItem, updateInventoryItem, removeInventoryItem,
-    untrackedItems, addUntrackedItem, updateUntrackedItem, removeUntrackedItem,
-    notes, setNotes 
+    consumables, updateConsumable, removeConsumable, addConsumable,
+    equipmentItems, updateEquipmentItem, removeEquipmentItem, addEquipmentItem,
+    inventoryItems, updateInventoryItem, removeInventoryItem, addInventoryItem,
+    untrackedItems, updateUntrackedItem, removeUntrackedItem, addUntrackedItem
   } = useCharacter();
 
   // EFFECT: Live calculation of total carried load including all structured item categories
@@ -138,7 +136,7 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
-        {/* INVENTORY CARD: NEW - Now a structured list for general items with weight */}
+        {/* INVENTORY CARD: Structured list for general items with weight */}
         <Card className="flex flex-col">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -184,7 +182,7 @@ export default function InventoryTab() {
         </Card>
       </div>
 
-      {/* RIGHT COLUMN: WALLET, UNTRACKED, SUMMARY, AND NOTES */}
+      {/* RIGHT COLUMN: WALLET, UNTRACKED, SUMMARY */}
       <div className="space-y-6">
         {/* TOTAL WEIGHT SUMMARY: Displays live calculation of current load from all structured lists */}
         <div className="bg-card border-2 border-primary/20 rounded-xl p-4 flex justify-between items-center shadow-lg">
@@ -265,24 +263,6 @@ export default function InventoryTab() {
             </Card>
           </AccordionItem>
         </Accordion>
-
-        {/* ADVENTURE NOTES: Separate free-text area for character journal and session notes */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ScrollText className="w-5 h-5 text-primary" /> Adventure Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex min-h-[200px]">
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Session notes, plot hooks, or character background..."
-              className="flex-1 w-full font-code text-sm resize-none leading-relaxed bg-background"
-              spellCheck={false}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

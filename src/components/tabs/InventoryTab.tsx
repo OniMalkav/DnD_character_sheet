@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from "@/components/ui/accordion";
 import { cn } from '@/lib/utils';
 
 export default function InventoryTab() {
@@ -48,49 +54,55 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
-        {/* UNTRACKED CONTENT */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <List className="w-5 h-5 text-indigo-400" /> Untracked Content
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col min-h-[300px]">
-            <ScrollArea className="flex-1 h-64 pr-3">
-              <div className="space-y-2">
-                {untrackedItems.length === 0 && (
-                  <div className="text-center text-muted-foreground py-10 text-sm italic">
-                    Add miscellaneous items here...
-                  </div>
-                )}
-                {untrackedItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 bg-background p-2 rounded-lg border">
-                    <Input 
-                      type="text" 
-                      value={item.name}
-                      onChange={(e) => updateUntrackedItem(item.id, e.target.value)}
-                      placeholder="Item description"
-                      className="flex-1 bg-transparent border-0 h-8 focus-visible:ring-0"
-                    />
-                    <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeUntrackedItem(item.id)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            <Button onClick={addUntrackedItem} variant="outline" className="w-full mt-4 border-dashed">
-              <Plus className="w-4 h-4 mr-2" /> Add Untracked Item
-            </Button>
-          </CardContent>
-        </Card>
+        {/* UNTRACKED CONTENT - COLLAPSIBLE & SMALLER */}
+        <Accordion type="single" collapsible defaultValue="untracked" className="w-full">
+          <AccordionItem value="untracked" className="border-none">
+            <Card className="overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <List className="w-5 h-5 text-indigo-400" /> Untracked Content
+                </CardTitle>
+              </AccordionTrigger>
+              <AccordionContent>
+                <CardContent className="flex flex-col pt-0">
+                  <ScrollArea className="inventory-scroll-area-sm">
+                    <div className="space-y-2">
+                      {untrackedItems.length === 0 && (
+                        <div className="text-center text-muted-foreground py-6 text-sm italic">
+                          Add miscellaneous items here...
+                        </div>
+                      )}
+                      {untrackedItems.map(item => (
+                        <div key={item.id} className="inventory-item-row">
+                          <Input 
+                            type="text" 
+                            value={item.name}
+                            onChange={(e) => updateUntrackedItem(item.id, e.target.value)}
+                            placeholder="Item description"
+                            className="inventory-item-input"
+                          />
+                          <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeUntrackedItem(item.id)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  <Button onClick={addUntrackedItem} variant="outline" className="w-full mt-4 border-dashed h-8 text-xs">
+                    <Plus className="w-3 h-3 mr-2" /> Add Item
+                  </Button>
+                </CardContent>
+              </AccordionContent>
+            </Card>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       <div className="space-y-6">
         {/* CONSUMABLES */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="w-5 h-5 text-primary" /> Consumables
             </CardTitle>
           </CardHeader>
@@ -103,13 +115,13 @@ export default function InventoryTab() {
                   </div>
                 )}
                 {consumables.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 bg-background p-2 rounded-lg border">
+                  <div key={item.id} className="inventory-item-row">
                     <Input 
                       type="text" 
                       value={item.name}
                       onChange={(e) => updateConsumable(item.id, 'name', e.target.value)}
                       placeholder="Item name"
-                      className="flex-1 bg-transparent border-0 h-8 focus-visible:ring-0"
+                      className="inventory-item-input"
                     />
                     <div className="flex items-center gap-1 bg-background rounded border">
                       <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', Math.max(0, (item.count as number) - 1))}>-</Button>
@@ -130,7 +142,7 @@ export default function InventoryTab() {
         {/* EQUIPMENT & NOTES */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <Package className="w-5 h-5 text-primary" /> Equipment & Notes
             </CardTitle>
           </CardHeader>

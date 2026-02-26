@@ -117,4 +117,21 @@
   .spell-slot-button--used:hover {
     border-color: rgba(255, 255, 255, 0.5); /* Brighten the border on hover. */
   }
+
+  /* --- Inventory List Styles --- */
+
+  /* This class wraps an individual item row in the inventory lists (Consumables, Untracked). */
+  .inventory-item-row {
+    @apply flex items-center gap-2 bg-background/50 p-2 rounded-lg border transition-all hover:border-primary/30;
+  }
+
+  /* This class is for the input field that holds the name or description of an inventory item. */
+  .inventory-item-input {
+    @apply flex-1 bg-transparent border-0 h-8 focus-visible:ring-0 text-sm font-medium;
+  }
+
+  /* This class shrinks the scrollable area for lists like Untracked Content to keep the UI tight. */
+  .inventory-scroll-area-sm {
+    @apply h-40 pr-3;
+  }
 }

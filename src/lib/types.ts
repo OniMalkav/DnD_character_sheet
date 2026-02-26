@@ -25,14 +25,21 @@ export type Consumable = {
   id: number;
   name: string;
   count: number;
-  weight: number; // Added weight field for consumables
+  weight: number;
 };
 
 export type EquipmentItem = {
   id: number;
   name: string;
-  weight: number; // Added weight field for equipment
-  isWearing: boolean; // Added status to track if item is equipped
+  weight: number;
+  isWearing: boolean;
+};
+
+// NEW: Structured type for general inventory gear
+export type InventoryItem = {
+  id: number;
+  name: string;
+  weight: number;
 };
 
 export type UntrackedItem = {

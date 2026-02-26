@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import type { Stats, CharInfo, Currency, Consumable, EquipmentItem, UntrackedItem, Spell, SpellSlots, Stat } from '@/lib/types';
+import type { Stats, CharInfo, Currency, Consumable, EquipmentItem, InventoryItem, UntrackedItem, Spell, SpellSlots, Stat } from '@/lib/types';
 
 type CharacterContextType = {
   characterName: string;
@@ -15,13 +15,17 @@ type CharacterContextType = {
   toggleProficiency: (skillName: string) => void;
   charInfo: CharInfo;
   updateCharInfo: (field: keyof CharInfo, value: any) => void;
-  inventory: string; // Now used for general "Notes"
-  setInventory: React.Dispatch<React.SetStateAction<string>>;
+  inventoryItems: InventoryItem[]; // Structured inventory items
+  addInventoryItem: () => void;
+  updateInventoryItem: (id: number, field: keyof InventoryItem, value: any) => void;
+  removeInventoryItem: (id: number) => void;
+  notes: string; // General adventure notes
+  setNotes: React.Dispatch<React.SetStateAction<string>>;
   consumables: Consumable[];
   addConsumable: () => void;
   updateConsumable: (id: number, field: keyof Consumable, value: any) => void;
   removeConsumable: (id: number) => void;
-  equipmentItems: EquipmentItem[]; // State for structured equipment
+  equipmentItems: EquipmentItem[];
   addEquipmentItem: () => void;
   updateEquipmentItem: (id: number, field: keyof EquipmentItem, value: any) => void;
   removeEquipmentItem: (id: number) => void;
@@ -55,7 +59,12 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [stats, setStats] = useState<Stats>({ str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 });
   const [pb, setPb] = useState(2);
   const [profs, setProfs] = useState(new Set<string>());
-  const [inventory, setInventory] = useState(''); // Serves as general notes area
+  
+  // Structured Inventory Gear
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  // General text notes
+  const [notes, setNotes] = useState('');
+
   const [consumables, setConsumables] = useState<Consumable[]>([]);
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([]);
   const [untrackedItems, setUntrackedItems] = useState<UntrackedItem[]>([]);
@@ -85,20 +94,28 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Consumables logic with weight
+  // Inventory CRUD
+  const addInventoryItem = () => setInventoryItems(prev => [...prev, { id: Date.now(), name: '', weight: 0 }]);
+  const updateInventoryItem = (id: number, field: keyof InventoryItem, value: any) => {
+    setInventoryItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+  const removeInventoryItem = (id: number) => setInventoryItems(prev => prev.filter(item => item.id !== id));
+
+  // Consumables CRUD
   const addConsumable = () => setConsumables(prev => [...prev, { id: Date.now(), name: '', count: 1, weight: 0 }]);
   const updateConsumable = (id: number, field: keyof Consumable, value: any) => {
     setConsumables(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeConsumable = (id: number) => setConsumables(prev => prev.filter(item => item.id !== id));
 
-  // Equipment logic with wearing status and weight
+  // Equipment CRUD
   const addEquipmentItem = () => setEquipmentItems(prev => [...prev, { id: Date.now(), name: '', weight: 0, isWearing: false }]);
   const updateEquipmentItem = (id: number, field: keyof EquipmentItem, value: any) => {
     setEquipmentItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeEquipmentItem = (id: number) => setEquipmentItems(prev => prev.filter(item => item.id !== id));
 
+  // Untracked CRUD
   const addUntrackedItem = () => setUntrackedItems(prev => [...prev, { id: Date.now(), name: '' }]);
   const updateUntrackedItem = (id: number, name: string) => {
     setUntrackedItems(prev => prev.map(item => item.id === id ? { ...item, name } : item));
@@ -165,7 +182,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const handleExport = () => {
     const data = {
-      characterName, charInfo, stats, pb, inventory, consumables, equipmentItems, untrackedItems, currency,
+      characterName, charInfo, stats, pb, notes, inventoryItems, consumables, equipmentItems, untrackedItems, currency,
       spellAbility, spellSlots, spells, profs: Array.from(profs)
     };
     const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'character';
@@ -194,7 +211,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
         if (data.stats) setStats(data.stats);
         if (data.pb) setPb(data.pb);
-        if (data.inventory !== undefined) setInventory(data.inventory);
+        if (data.notes !== undefined) setNotes(data.notes);
+        if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
         if (data.currency) setCurrency(data.currency);
         if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
         if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
@@ -222,7 +240,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const value = {
     characterName, setCharacterName, stats, updateStat, pb, setPb, profs, toggleProficiency,
-    charInfo, updateCharInfo, inventory, setInventory, consumables, addConsumable,
+    charInfo, updateCharInfo, inventoryItems, addInventoryItem, updateInventoryItem, removeInventoryItem,
+    notes, setNotes, consumables, addConsumable,
     updateConsumable, removeConsumable, equipmentItems, addEquipmentItem,
     updateEquipmentItem, removeEquipmentItem, untrackedItems, addUntrackedItem,
     updateUntrackedItem, removeUntrackedItem, currency, updateCurrency, spellAbility, setSpellAbility,

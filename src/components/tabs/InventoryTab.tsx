@@ -24,9 +24,76 @@ export default function InventoryTab() {
   } = useCharacter();
 
   return (
+    /* Main layout grid: Swaps to a single column on mobile and 2 columns on large screens */
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+      
+      {/* LEFT COLUMN: PRIMARY GEAR AND CONSUMABLES */}
       <div className="space-y-6">
-        {/* WALLET */}
+        {/* CONSUMABLES CARD: For items with specific quantities like Potions or Arrows */}
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="w-5 h-5 text-primary" /> Consumables
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1 h-64 pr-3">
+              <div className="space-y-2">
+                {consumables.length === 0 && (
+                  <div className="text-center text-muted-foreground py-10 text-sm italic">
+                    Add items with quantity tracking...
+                  </div>
+                )}
+                {consumables.map(item => (
+                  <div key={item.id} className="inventory-item-row">
+                    {/* Item name input */}
+                    <Input 
+                      type="text" 
+                      value={item.name}
+                      onChange={(e) => updateConsumable(item.id, 'name', e.target.value)}
+                      placeholder="Item name"
+                      className="inventory-item-input"
+                    />
+                    {/* Quantity controls */}
+                    <div className="flex items-center gap-1 bg-background rounded border">
+                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', Math.max(0, (item.count as number) - 1))}>-</Button>
+                      <span className="text-sm font-mono w-6 text-center font-bold text-primary">{item.count}</span>
+                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', (item.count as number) + 1)}>+</Button>
+                    </div>
+                    {/* Remove button */}
+                    <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeConsumable(item.id)}><X className="w-4 h-4" /></Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <Button onClick={addConsumable} variant="outline" className="w-full mt-4 border-dashed">
+              <Plus className="w-4 h-4 mr-2" /> Add Consumable
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* EQUIPMENT & NOTES: Large text area for armor, weapons, and general inventory details */}
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Package className="w-5 h-5 text-primary" /> Equipment & Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex min-h-[250px]">
+            <Textarea
+              value={inventory}
+              onChange={(e) => setInventory(e.target.value)}
+              placeholder="Armor, weapons, and other long-form notes..."
+              className="flex-1 w-full font-code text-sm resize-none leading-relaxed bg-background"
+              spellCheck={false}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* RIGHT COLUMN: CURRENCY AND MISCELLANEOUS ITEMS */}
+      <div className="space-y-6">
+        {/* WALLET CARD: For tracking copper, silver, electrum, gold, and platinum */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -54,7 +121,7 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
-        {/* UNTRACKED CONTENT - COLLAPSIBLE & SMALLER */}
+        {/* UNTRACKED CONTENT: Collapsible list for general loot and miscellaneous items */}
         <Accordion type="single" collapsible defaultValue="untracked" className="w-full">
           <AccordionItem value="untracked" className="border-none">
             <Card className="overflow-hidden">
@@ -96,66 +163,6 @@ export default function InventoryTab() {
             </Card>
           </AccordionItem>
         </Accordion>
-      </div>
-
-      <div className="space-y-6">
-        {/* CONSUMABLES */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="w-5 h-5 text-primary" /> Consumables
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1 h-64 pr-3">
-              <div className="space-y-2">
-                {consumables.length === 0 && (
-                  <div className="text-center text-muted-foreground py-10 text-sm italic">
-                    Add items with quantity tracking...
-                  </div>
-                )}
-                {consumables.map(item => (
-                  <div key={item.id} className="inventory-item-row">
-                    <Input 
-                      type="text" 
-                      value={item.name}
-                      onChange={(e) => updateConsumable(item.id, 'name', e.target.value)}
-                      placeholder="Item name"
-                      className="inventory-item-input"
-                    />
-                    <div className="flex items-center gap-1 bg-background rounded border">
-                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', Math.max(0, (item.count as number) - 1))}>-</Button>
-                      <span className="text-sm font-mono w-6 text-center font-bold text-primary">{item.count}</span>
-                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', (item.count as number) + 1)}>+</Button>
-                    </div>
-                    <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeConsumable(item.id)}><X className="w-4 h-4" /></Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            <Button onClick={addConsumable} variant="outline" className="w-full mt-4 border-dashed">
-              <Plus className="w-4 h-4 mr-2" /> Add Consumable
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* EQUIPMENT & NOTES */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Package className="w-5 h-5 text-primary" /> Equipment & Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex min-h-[250px]">
-            <Textarea
-              value={inventory}
-              onChange={(e) => setInventory(e.target.value)}
-              placeholder="Armor, weapons, and other long-form notes..."
-              className="flex-1 w-full font-code text-sm resize-none leading-relaxed bg-background"
-              spellCheck={false}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

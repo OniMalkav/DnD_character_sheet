@@ -81,6 +81,15 @@ export type SkillBonus = {
     d12: boolean;
 };
 
+export type AttackResult = {
+  hit: number;
+  damage: number;
+  d20Value: number;
+  isCrit: boolean;
+  isFumble: boolean;
+  detailsStr: string;
+};
+
 export type RollResult = {
   total: number;
   totalHit: number;
@@ -95,4 +104,5 @@ export type RollResult = {
   detailsStr: string;
   rollMode: RollMode;
   label: string | null;
+  attacks?: AttackResult[]; // EFFECT: Individual attack breakdowns for multi-attack scenarios
 };

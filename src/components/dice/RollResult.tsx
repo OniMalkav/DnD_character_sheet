@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Sword } from 'lucide-react';
+import { Sword, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RollResult as RollResultType, RollBreakdown } from '@/lib/types';
 
@@ -28,6 +28,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
   const isD20Roll = result.hasD20;
   const calcData = getCalculationData(result.breakdown);
   const isSkillCheck = !!result.label && result.label.endsWith(' Check');
+  const isMultiAttack = result.attacks && result.attacks.length > 1;
 
   return (
     <div className={cn(
@@ -50,7 +51,39 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
            </div>
         )}
         
-        {isD20Roll ? (
+        {/* EFFECT: Multi-Attack Display Mode */}
+        {isMultiAttack ? (
+          <div className="space-y-4">
+            <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Multiple Attacks</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {result.attacks?.map((atk, idx) => (
+                <div key={idx} className="bg-background/50 border rounded-xl p-4 flex flex-col gap-2 relative">
+                  <div className="absolute top-2 left-3 text-[10px] font-black text-muted-foreground uppercase tracking-tighter opacity-50">#0{idx+1}</div>
+                  <div className="flex justify-around items-center pt-2">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase mb-1">To Hit</span>
+                      <div className={cn("text-3xl font-black font-headline", atk.isCrit ? 'text-yellow-400' : atk.isFumble ? 'text-red-500' : 'text-foreground')}>
+                        {atk.hit}
+                      </div>
+                    </div>
+                    <div className="w-px h-10 bg-border"></div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Damage</span>
+                      <div className="text-3xl font-black font-headline text-red-400">
+                        {atk.damage}
+                      </div>
+                    </div>
+                  </div>
+                  {atk.isCrit && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center mt-1 animate-pulse">Critical!</div>}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50">
+               <span className="text-[10px] text-muted-foreground font-bold uppercase">Total Multi-Damage: </span>
+               <span className="text-2xl font-black font-headline text-primary ml-2">{result.totalDamage}</span>
+            </div>
+          </div>
+        ) : isD20Roll ? (
            <div className="flex flex-col items-center">
              <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Total Result</h3>
              <div className={cn(
@@ -123,7 +156,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
         )}
       </div>
 
-      {!isD20Roll && (
+      {!isD20Roll && !isMultiAttack && (
         <div className="p-4 bg-background/30 flex justify-center flex-wrap gap-2">
            {Object.entries(result.breakdown).map(([dieType, rolls]) => (
               <div key={dieType} className="flex gap-2">

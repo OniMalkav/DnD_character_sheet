@@ -19,6 +19,10 @@ type CharacterContextType = {
   addInventoryItem: () => void;
   updateInventoryItem: (id: number, field: keyof InventoryItem, value: any) => void;
   removeInventoryItem: (id: number) => void;
+  bagItems: InventoryItem[]; // EFFECT: Items stored specifically in the Bag of Holding
+  addBagItem: () => void;
+  updateBagItem: (id: number, field: keyof InventoryItem, value: any) => void;
+  removeBagItem: (id: number) => void;
   notes: string; 
   setNotes: React.Dispatch<React.SetStateAction<string>>;
   consumables: Consumable[];
@@ -63,6 +67,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [profs, setProfs] = useState(new Set<string>());
   
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [bagItems, setBagItems] = useState<InventoryItem[]>([]); // DEFAULT: Empty Bag of Holding
   const [notes, setNotes] = useState('');
   const [consumables, setConsumables] = useState<Consumable[]>([]);
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([]);
@@ -100,6 +105,12 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setInventoryItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeInventoryItem = (id: number) => setInventoryItems(prev => prev.filter(item => item.id !== id));
+
+  const addBagItem = () => setBagItems(prev => [...prev, { id: Date.now(), name: '', weight: 0 }]);
+  const updateBagItem = (id: number, field: keyof InventoryItem, value: any) => {
+    setBagItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+  const removeBagItem = (id: number) => setBagItems(prev => prev.filter(item => item.id !== id));
 
   const addConsumable = () => setConsumables(prev => [...prev, { id: Date.now(), name: '', count: 1, weight: 0 }]);
   const updateConsumable = (id: number, field: keyof Consumable, value: any) => {
@@ -179,7 +190,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const handleExport = () => {
     const data = {
-      characterName, charInfo, stats, pb, notes, inventoryItems, consumables, equipmentItems, untrackedItems, currency,
+      characterName, charInfo, stats, pb, notes, inventoryItems, bagItems, consumables, equipmentItems, untrackedItems, currency,
       spellAbility, spellSlots, spells, doubleCarry, profs: Array.from(profs)
     };
     const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'character';
@@ -210,6 +221,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.pb) setPb(data.pb);
         if (data.notes !== undefined) setNotes(data.notes);
         if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
+        if (data.bagItems !== undefined) setBagItems(data.bagItems);
         if (data.currency) setCurrency(data.currency);
         if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
         if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
@@ -239,6 +251,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value = {
     characterName, setCharacterName, stats, updateStat, pb, setPb, profs, toggleProficiency,
     charInfo, updateCharInfo, inventoryItems, addInventoryItem, updateInventoryItem, removeInventoryItem,
+    bagItems, addBagItem, updateBagItem, removeBagItem,
     notes, setNotes, consumables, addConsumable,
     updateConsumable, removeConsumable, equipmentItems, addEquipmentItem,
     updateEquipmentItem, removeEquipmentItem, untrackedItems, addUntrackedItem,

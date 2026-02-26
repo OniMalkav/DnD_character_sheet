@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck, BicepsFlexed } from 'lucide-react';
+import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck, BicepsFlexed, Briefcase } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ export default function InventoryTab() {
     consumables, updateConsumable, removeConsumable, addConsumable,
     equipmentItems, updateEquipmentItem, removeEquipmentItem, addEquipmentItem,
     inventoryItems, updateInventoryItem, removeInventoryItem, addInventoryItem,
+    bagItems, updateBagItem, removeBagItem, addBagItem,
     untrackedItems, updateUntrackedItem, removeUntrackedItem, addUntrackedItem,
     doubleCarry, setDoubleCarry
   } = useCharacter();
@@ -31,6 +32,9 @@ export default function InventoryTab() {
   const totalWeight = consumables.reduce((acc, item) => acc + ((item.weight || 0) * item.count), 0) + 
                       equipmentItems.reduce((acc, item) => acc + (item.weight || 0), 0) +
                       inventoryItems.reduce((acc, item) => acc + (item.weight || 0), 0);
+
+  // EFFECT: Independent calculation for Bag of Holding contents (usually max 500 lbs)
+  const totalBagWeight = bagItems.reduce((acc, item) => acc + (item.weight || 0), 0);
 
   // FORMULA: 2024 Carry Rules - Capacity = Strength Score * 15. 
   // EFFECT: Multiplied by 2 if doubleCarry is active (Powerful Build trait, Enlarge spell, etc.)
@@ -191,7 +195,7 @@ export default function InventoryTab() {
         </Card>
       </div>
 
-      {/* RIGHT COLUMN: WALLET, UNTRACKED, SUMMARY */}
+      {/* RIGHT COLUMN: WALLET, BAG OF HOLDING, UNTRACKED, SUMMARY */}
       <div className="space-y-6">
         {/* TOTAL WEIGHT SUMMARY: Displays live calculation of current load vs capacity */}
         <div className={cn(
@@ -260,13 +264,61 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
+        {/* BAG OF HOLDING: Independent list with its own weight tracker */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Briefcase className="w-5 h-5 text-indigo-400" /> Bag of Holding
+            </CardTitle>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Internal Weight</span>
+              <span className="text-xs font-mono font-bold text-indigo-400">{totalBagWeight.toFixed(1)} / 500.0</span>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col">
+            <ScrollArea className="h-64 pr-3">
+              <div className="space-y-2">
+                {bagItems.length === 0 && (
+                  <div className="text-center text-muted-foreground py-10 text-sm italic">
+                    The bag is empty...
+                  </div>
+                )}
+                {bagItems.map(item => (
+                  <div key={item.id} className="inventory-item-row gap-1 border-indigo-500/20">
+                    <Input 
+                      type="text" 
+                      value={item.name}
+                      onChange={(e) => updateBagItem(item.id, 'name', e.target.value)}
+                      placeholder="Item name"
+                      className="inventory-item-input"
+                    />
+                    <div className="flex items-center bg-background rounded border h-8 w-14 overflow-hidden">
+                      <Input 
+                        type="number"
+                        value={item.weight}
+                        onChange={(e) => updateBagItem(item.id, 'weight', parseFloat(e.target.value) || 0)}
+                        className="w-full h-full border-0 bg-transparent text-center text-xs font-mono px-1 focus-visible:ring-0"
+                        placeholder="Lbs"
+                      />
+                    </div>
+                    <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeBagItem(item.id)}><X className="w-4 h-4" /></Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <Button onClick={addBagItem} variant="outline" className="w-full mt-4 border-dashed border-indigo-500/30 hover:bg-indigo-500/10">
+              <Plus className="w-4 h-4 mr-2" /> Add to Bag
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* UNTRACKED CONTENT: Miscellaneous loot without weight or quantity */}
         <Accordion type="single" collapsible defaultValue="untracked" className="w-full">
           <AccordionItem value="untracked" className="border-none">
             <Card className="overflow-hidden">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <List className="w-5 h-5 text-indigo-400" /> Untracked Content
+                  <List className="w-5 h-5 text-emerald-400" /> Untracked Content
                 </CardTitle>
               </AccordionTrigger>
               <AccordionContent>

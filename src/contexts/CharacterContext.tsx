@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import type { Stats, CharInfo, Currency, Consumable, Spell, SpellSlots, Stat, SpellSlotState } from '@/lib/types';
+import type { Stats, CharInfo, Currency, Consumable, UntrackedItem, Spell, SpellSlots, Stat } from '@/lib/types';
 
 type CharacterContextType = {
   characterName: string;
@@ -21,6 +21,10 @@ type CharacterContextType = {
   addConsumable: () => void;
   updateConsumable: (id: number, field: keyof Consumable, value: any) => void;
   removeConsumable: (id: number) => void;
+  untrackedItems: UntrackedItem[];
+  addUntrackedItem: () => void;
+  updateUntrackedItem: (id: number, name: string) => void;
+  removeUntrackedItem: (id: number) => void;
   currency: Currency;
   updateCurrency: (type: keyof Currency, value: number) => void;
   spellAbility: Stat;
@@ -49,6 +53,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [profs, setProfs] = useState(new Set<string>());
   const [inventory, setInventory] = useState('');
   const [consumables, setConsumables] = useState<Consumable[]>([]);
+  const [untrackedItems, setUntrackedItems] = useState<UntrackedItem[]>([]);
   const [currency, setCurrency] = useState<Currency>({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
   const [charInfo, setCharInfo] = useState<CharInfo>({ race: '', class: '', level: 1, class2: '', level2: '', background: '', alignment: '', xp: 0, feats: '' });
   const [spellAbility, setSpellAbility] = useState<Stat>('int');
@@ -80,6 +85,13 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setConsumables(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeConsumable = (id: number) => setConsumables(prev => prev.filter(item => item.id !== id));
+
+  const addUntrackedItem = () => setUntrackedItems(prev => [...prev, { id: Date.now(), name: '' }]);
+  const updateUntrackedItem = (id: number, name: string) => {
+    setUntrackedItems(prev => prev.map(item => item.id === id ? { ...item, name } : item));
+  };
+  const removeUntrackedItem = (id: number) => setUntrackedItems(prev => prev.filter(item => item.id !== id));
+
   const updateCurrency = (type: keyof Currency, value: number) => {
     setCurrency(prev => ({ ...prev, [type]: Math.max(0, value || 0) }));
   };
@@ -140,7 +152,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const handleExport = () => {
     const data = {
-      characterName, charInfo, stats, pb, inventory, consumables, currency,
+      characterName, charInfo, stats, pb, inventory, consumables, untrackedItems, currency,
       spellAbility, spellSlots, spells, profs: Array.from(profs)
     };
     const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'character';
@@ -172,28 +184,11 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.inventory !== undefined) setInventory(data.inventory);
         if (data.currency) setCurrency(data.currency);
         if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
+        if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
         if (data.spellAbility) setSpellAbility(data.spellAbility);
         
         if (data.spellSlots) {
-          const importedSlots = data.spellSlots;
-          const firstLevelKey = Object.keys(importedSlots)[0];
-          // Convert old format if necessary
-          if (firstLevelKey && importedSlots[firstLevelKey].hasOwnProperty('used')) {
-            const convertedSlots: SpellSlots = {};
-            for (const level in importedSlots) {
-              if (importedSlots.hasOwnProperty(level)) {
-                const { max, used } = importedSlots[level];
-                const newSlots = Array(max).fill(false);
-                for (let i = 0; i < used; i++) {
-                  newSlots[i] = true; // Mark as used
-                }
-                convertedSlots[level] = { max, slots: newSlots };
-              }
-            }
-            setSpellSlots(convertedSlots);
-          } else {
-            setSpellSlots(importedSlots);
-          }
+          setSpellSlots(data.spellSlots);
         }
 
         if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
@@ -214,7 +209,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value = {
     characterName, setCharacterName, stats, updateStat, pb, setPb, profs, toggleProficiency,
     charInfo, updateCharInfo, inventory, setInventory, consumables, addConsumable,
-    updateConsumable, removeConsumable, currency, updateCurrency, spellAbility, setSpellAbility,
+    updateConsumable, removeConsumable, untrackedItems, addUntrackedItem,
+    updateUntrackedItem, removeUntrackedItem, currency, updateCurrency, spellAbility, setSpellAbility,
     spellSlots, updateSpellSlotMax, toggleSpellSlot, longRest, spells, addSpell, removeSpell,
     handleExport, handleImportClick, fileInputRef
   };

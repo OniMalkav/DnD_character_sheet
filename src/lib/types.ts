@@ -27,6 +27,11 @@ export type Consumable = {
   count: number;
 };
 
+export type UntrackedItem = {
+  id: number;
+  name: string;
+};
+
 export type Spell = {
   id: number;
   name: string;

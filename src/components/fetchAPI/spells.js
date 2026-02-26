@@ -21,7 +21,7 @@ async function get2024Spells() {
     }
 
     // Write the final master list to a JSON file in your workspace
-    fs.writeFileSync('spells_2024.json', JSON.stringify(allSpells, null, 2));
+fs.writeFileSync('src/lib/spells_2024.json', JSON.stringify(allSpells, null, 2));
     
     console.log(`Success! Saved ${allSpells.length} spells into spells_2024.json.`);
     

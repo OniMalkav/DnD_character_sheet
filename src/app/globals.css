@@ -4,43 +4,71 @@
 
 @layer base {
   :root {
+    /* --- Main Background Colors --- */
+    /* This sets the primary background of the application. Currently a dark, rich brown. */
     --background: 28 22 19;
+    /* The primary text color. Set to pure white for high contrast on the dark background. */
     --foreground: 255 255 255;
  
+    /* --- UI Card Styling --- */
+    /* Background for standard UI cards. Matches the main background. */
     --card: 28 22 19;
+    /* Text color for content within cards. */
     --card-foreground: 255 255 255;
  
+    /* --- Popover & Dropdown Menus --- */
+    /* Background for smaller floating menus or tooltips. */
     --popover: 38 29 24;
+    /* Text color for floating menu items. */
     --popover-foreground: 250 250 250;
 
+    /* --- Primary Theme Color --- */
+    /* This is your 'Accent' color used for primary buttons, highlights, etc. Currently an amber orange. */
     --primary: 244 140 37;
+    /* Text color used on top of the primary color. */
     --primary-foreground: 255 255 255;
  
+    /* --- Secondary UI Elements --- */
+    /* Used for less important buttons or backgrounds. */
     --secondary: 74 63 54;
     --secondary-foreground: 250 250 250;
  
+    /* --- Muted / Disabled Colors --- */
+    /* Used for text or backgrounds that should not stand out. */
     --muted: 74 63 54;
     --muted-foreground: 168 162 158;
  
+    /* --- Highlight Accent Color --- */
+    /* A bright highlight color, currently pure white. */
     --accent: 255 255 255;
+    /* Text color used when the accent color is the background. */
     --accent-foreground: 18 16 14;
  
+    /* --- Status Colors --- */
+    /* Red color used for errors, 'Disadvantage', or destructive actions. */
     --destructive: 153 27 27;
     --destructive-foreground: 250 250 250;
     
+    /* Green color used for successes or 'Advantage'. */
     --success: 22 163 74;
     --success-foreground: 250 250 250;
 
+    /* --- Border & Input Styling --- */
+    /* Color for lines separating content. */
     --border: 74 63 54;
+    /* Background color for form input fields. */
     --input: 58 48 40;
+    /* The color of the glow when an input is selected. */
     --ring: 244 140 37;
     
+    /* --- Charting Colors --- */
     --chart-1: 242 126 85;
     --chart-2: 42 157 137;
     --chart-3: 38 77 98;
     --chart-4: 245 203 90;
     --chart-5: 249 161 93;
     
+    /* --- Corner Rounding --- */
     --radius: 0.5rem;
   }
 }
@@ -69,9 +97,9 @@
 
   /* This style represents an AVAILABLE spell slot. It's bright and glowing. */
   .spell-slot-button--available {
-    @apply bg-accent; /* Uses the magical indigo color. */
+    @apply bg-accent; /* Uses the magical white/indigo highlight color. */
     border-color: rgba(153, 192, 238, 0.8); /* Bright border. */
-    box-shadow: 0 0 8px var(--accent); /* Glow effect using the accent color. */
+    box-shadow: 0 0 8px rgb(var(--accent)); /* Glow effect using the accent color. */
   }
 
   /* This adds a hover effect to an AVAILABLE slot to show it's interactive. */

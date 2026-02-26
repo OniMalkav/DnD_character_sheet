@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Sword, Target } from 'lucide-react';
+import { Sword } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RollResult as RollResultType, RollBreakdown } from '@/lib/types';
 
@@ -11,7 +11,7 @@ type RollResultProps = {
 };
 
 const getCalculationData = (breakdown: RollBreakdown) => {
-  const naturalD20 = breakdown.d20 ? breakdown.d20.reduce((acc, r) => acc + r.value, 0) : 0;
+  const naturalD20 = breakdown.d20 ? breakdown.d20.reduce((acc, r) => acc + (r.dropped ? 0 : r.value), 0) : 0;
   
   const otherDiceElements: { type: string, value: number }[] = [];
   Object.entries(breakdown).forEach(([dieType, rolls]) => {
@@ -29,6 +29,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
   const calcData = getCalculationData(result.breakdown);
   const isSkillCheck = !!result.label && result.label.endsWith(' Check');
   const isMultiAttack = result.attacks && result.attacks.length > 1;
+  const hasCrit = result.breakdown.d20?.some(r => !r.dropped && r.value === 20);
 
   return (
     <div className={cn(
@@ -51,7 +52,6 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
            </div>
         )}
         
-        {/* EFFECT: Multi-Attack Display Mode */}
         {isMultiAttack ? (
           <div className="space-y-4">
             <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Multiple Attacks</h3>
@@ -88,7 +88,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
              <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Total Result</h3>
              <div className={cn(
                 "text-7xl md:text-8xl font-black drop-shadow-lg tracking-tighter mb-4 font-headline",
-                result.breakdown.d20?.some(r => !r.dropped && r.value === 20) ? 'text-yellow-400 animate-pulse' :
+                hasCrit ? 'text-yellow-400 animate-pulse' :
                 result.breakdown.d20?.some(r => !r.dropped && r.value === 1) ? 'text-red-500' : 'text-foreground'
              )}>
                 {result.totalHit}
@@ -122,6 +122,9 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                   ))}
                   <span className="text-foreground font-bold"> = {result.totalHit}</span>
                </div>
+               {hasCrit && !isSkillCheck && (
+                 <div className="text-[10px] text-yellow-500 font-black uppercase tracking-[0.2em] mt-2 animate-pulse">Critical Hit! Damage Dice Doubled</div>
+               )}
                {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0) && !isSkillCheck && (
                  <div className="flex flex-col items-center justify-center gap-1 mt-3 pt-3 border-t border-border/50 w-full">
                    <div className="flex items-center gap-2">

@@ -5,7 +5,7 @@ import DiceGrid from "@/components/dice/DiceGrid";
 import RollControls from "@/components/dice/RollControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown, AttackResult } from "@/lib/types";
+import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown, AttackResult, DieRoll } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type DiceRollerTabProps = {
@@ -66,12 +66,12 @@ export default function DiceRollerTab({
           const attacks: AttackResult[] = [];
 
           // EFFECT: Multi-Attack Logic
-          // If rolling multiple d20s in Normal mode, treat each as a separate attack with its own damage roll.
           const isMultiAttack = rollMode === 'normal' && d20Count > 1;
 
           if (isMultiAttack) {
             for (let i = 0; i < d20Count; i++) {
               const d20Val = Math.floor(Math.random() * 20) + 1;
+              const isCrit = d20Val === 20;
               let attackDamage = 0;
               let attackDamageDetails: string[] = [];
 
@@ -80,12 +80,16 @@ export default function DiceRollerTab({
                 if (die !== 'd20' && count > 0) {
                   const sides = parseInt(die.substring(1));
                   const rolls = [];
-                  for (let j = 0; j < count; j++) {
+                  
+                  // CRIT EFFECT: 2024 Rules - Double the number of damage dice on a Critical Hit
+                  const effectiveCount = isCrit ? count * 2 : count;
+                  
+                  for (let j = 0; j < effectiveCount; j++) {
                     const r = Math.floor(Math.random() * sides) + 1;
                     rolls.push(r);
                     attackDamage += r;
                   }
-                  attackDamageDetails.push(`${count}${die}: [${rolls.join(',')}]`);
+                  attackDamageDetails.push(`${effectiveCount}${die}: [${rolls.join(',')}]`);
                 }
               });
 
@@ -93,7 +97,7 @@ export default function DiceRollerTab({
                 hit: d20Val + modifier,
                 damage: attackDamage + damageMod,
                 d20Value: d20Val,
-                isCrit: d20Val === 20,
+                isCrit: isCrit,
                 isFumble: d20Val === 1,
                 detailsStr: `d20: [${d20Val}] + ${attackDamageDetails.join(' + ')}`
               });
@@ -105,49 +109,64 @@ export default function DiceRollerTab({
               damageSum += attackDamage;
             }
             
-            // Populate overall breakdown for history (summary only)
             breakdown.d20 = attacks.map(a => ({ value: a.d20Value }));
             rollDetails.push(`${d20Count} Attacks Rolled`);
           } else {
             // STANDARD LOGIC (Single d20 or Adv/Dis)
+            let critDoubling = false;
+            let d20Rolls: DieRoll[] = [];
+
+            // 1. Roll d20 first to check for Critical Hit status
+            if (d20Count > 0) {
+              const sides = 20;
+              for (let i = 0; i < d20Count; i++) {
+                const r1 = Math.floor(Math.random() * sides) + 1;
+                if (rollMode !== 'normal') {
+                  const r2 = Math.floor(Math.random() * sides) + 1;
+                  const kept = rollMode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
+                  const dropped = rollMode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
+                  d20Rolls.push({ value: kept, dropped, mode: rollMode });
+                  d20Sum += kept;
+                  if (kept === 20) critDoubling = true;
+                  if (kept === 1) hasNat1 = true;
+                } else {
+                  d20Rolls.push({ value: r1 });
+                  d20Sum += r1;
+                  if (r1 === 20) critDoubling = true;
+                  if (r1 === 1) hasNat1 = true;
+                }
+              }
+              breakdown.d20 = d20Rolls;
+              hasNat20 = critDoubling;
+            }
+
+            // 2. Roll other dice (Damage/Modifier dice)
             Object.entries(counts).forEach(([die, count]) => {
-              if (count > 0) {
+              if (die !== 'd20' && count > 0) {
                 const sides = parseInt(die.substring(1));
                 const dieRolls = [];
                 
-                for (let i = 0; i < count; i++) {
-                  if (die === 'd20') {
-                      const r1 = Math.floor(Math.random() * sides) + 1;
-                      if (rollMode !== 'normal') {
-                          const r2 = Math.floor(Math.random() * sides) + 1;
-                          const kept = rollMode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
-                          const dropped = rollMode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
-                          dieRolls.push({ value: kept, dropped: dropped, mode: rollMode });
-                          d20Sum += kept;
-                      } else {
-                          dieRolls.push({ value: r1 });
-                          d20Sum += r1;
-                      }
-                  } else {
-                      const roll = Math.floor(Math.random() * sides) + 1;
-                      dieRolls.push({ value: roll });
-                      damageSum += roll;
-                  }
+                // CRIT EFFECT: Double number of dice if d20 was a Natural 20
+                const effectiveCount = critDoubling ? count * 2 : count;
+                
+                for (let i = 0; i < effectiveCount; i++) {
+                  const roll = Math.floor(Math.random() * sides) + 1;
+                  dieRolls.push({ value: roll });
+                  damageSum += roll;
                 }
                 breakdown[die as DiceType] = dieRolls;
       
-                if (die === 'd20') {
-                  dieRolls.forEach(r => {
-                    if (r.value === 20 && !r.dropped) hasNat20 = true;
-                    if (r.value === 1 && !r.dropped) hasNat1 = true;
-                  });
-                }
-      
                 const rollValues = dieRolls.map(r => r.value).join(', ');
-                const modeTag = (rollMode !== 'normal' && die === 'd20') ? ` (${rollMode.substring(0,3).toUpperCase()})` : '';
-                rollDetails.push(`${count}${die}${modeTag}: [${rollValues}]`);
+                rollDetails.push(`${effectiveCount}${die}: [${rollValues}]`);
               }
             });
+
+            // Prepend d20 info to roll details string
+            if (d20Count > 0) {
+              const d20Vals = d20Rolls.map(r => r.value).join(', ');
+              const modeTag = rollMode !== 'normal' ? ` (${rollMode.substring(0,3).toUpperCase()})` : '';
+              rollDetails.unshift(`${d20Count}d20${modeTag}: [${d20Vals}]`);
+            }
           }
     
           const resultObj: RollResult = {

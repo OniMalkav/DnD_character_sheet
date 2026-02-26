@@ -69,10 +69,14 @@ export default function DiceRollerTab({
           const isMultiAttack = rollMode === 'normal' && d20Count > 1;
 
           if (isMultiAttack) {
+            let totalMultiDamage = 0;
+            let hitsCount = 0;
+
             for (let i = 0; i < d20Count; i++) {
               const d20Val = Math.floor(Math.random() * 20) + 1;
               const isCrit = d20Val === 20;
-              let attackDamage = 0;
+              const isFumble = d20Val === 1;
+              let attackDiceTotal = 0;
               let attackDamageDetails: string[] = [];
 
               // Roll individual damage set for this specific attack
@@ -87,18 +91,20 @@ export default function DiceRollerTab({
                   for (let j = 0; j < effectiveCount; j++) {
                     const r = Math.floor(Math.random() * sides) + 1;
                     rolls.push(r);
-                    attackDamage += r;
+                    attackDiceTotal += r;
                   }
                   attackDamageDetails.push(`${effectiveCount}${die}: [${rolls.join(',')}]`);
                 }
               });
 
+              const attackTotalDamage = attackDiceTotal + damageMod;
+
               attacks.push({
                 hit: d20Val + modifier,
-                damage: attackDamage + damageMod,
+                damage: attackTotalDamage,
                 d20Value: d20Val,
                 isCrit: isCrit,
-                isFumble: d20Val === 1,
+                isFumble: isFumble,
                 detailsStr: `d20: [${d20Val}] + ${attackDamageDetails.join(' + ')}`
               });
 
@@ -106,11 +112,17 @@ export default function DiceRollerTab({
               if (d20Val === 1) hasNat1 = true;
               
               d20Sum += d20Val;
-              damageSum += attackDamage;
+              
+              // EFFECT: Automatic Miss on Natural 1 - Damage excluded from total multi-damage calculation
+              if (!isFumble) {
+                totalMultiDamage += attackTotalDamage;
+                hitsCount++;
+              }
             }
             
+            damageSum = totalMultiDamage; // Multi-damage total already includes damageMod
             breakdown.d20 = attacks.map(a => ({ value: a.d20Value }));
-            rollDetails.push(`${d20Count} Attacks Rolled`);
+            rollDetails.push(`${d20Count} Attacks Rolled (${hitsCount} Hits)`);
           } else {
             // STANDARD LOGIC (Single d20 or Adv/Dis)
             let critDoubling = false;
@@ -169,13 +181,16 @@ export default function DiceRollerTab({
             }
           }
     
+          const finalTotalDamage = isMultiAttack ? damageSum : (damageSum + damageMod);
+          const finalTotalHit = d20Sum + (modifier * (isMultiAttack ? d20Count : 1));
+
           const resultObj: RollResult = {
-            total: (d20Sum + (modifier * (isMultiAttack ? d20Count : 1))) + (damageSum + (damageMod * (isMultiAttack ? d20Count : 1))),
-            totalHit: d20Sum + (modifier * (isMultiAttack ? d20Count : 1)),
-            totalDamage: damageSum + (damageMod * (isMultiAttack ? d20Count : 1)),
+            total: finalTotalHit + finalTotalDamage,
+            totalHit: finalTotalHit,
+            totalDamage: finalTotalDamage,
             hasD20: d20Count > 0,
             hasDamage: damageSum > 0 || damageMod !== 0,
-            damageRaw: damageSum,
+            damageRaw: isMultiAttack ? damageSum : damageSum,
             breakdown,
             hitMod: modifier,
             dmgMod: damageMod,

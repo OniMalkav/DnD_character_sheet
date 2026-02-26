@@ -77,8 +77,8 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                       </div>
                     </div>
                   </div>
-                  {/* EFFECT: Detailed roll breakdown for multi-attack items */}
-                  <div className="text-[9px] font-code text-muted-foreground truncate px-2 text-center mt-1" title={atk.detailsStr}>
+                  {/* FONT SIZE: Adjust text-[12px] below to change breakdown size for multi-attacks */}
+                  <div className="text-[12px] font-code text-muted-foreground truncate px-2 text-center mt-1" title={atk.detailsStr}>
                     {atk.detailsStr}
                   </div>
                   {atk.isCrit && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center animate-pulse">Critical!</div>}
@@ -123,7 +123,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                  ))}
                </div>
                <div className="text-muted-foreground font-code text-sm bg-background/50 px-3 py-1.5 rounded border border-border/50">
-                  {calcData.naturalD20} (d20)
+                  {naturalD20} (d20)
                   {result.hitMod !== 0 && (result.hitMod > 0 ? ` + ${result.hitMod} (mod)` : ` - ${Math.abs(result.hitMod)} (mod)`)}
                   {isSkillCheck && calcData.otherDiceElements.map((item, idx) => (
                     <React.Fragment key={idx}> + {item.value} ({item.type})</React.Fragment>
@@ -167,12 +167,12 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
         )}
       </div>
 
-      {/* EFFECT: Show individual dice roll results for all non-multi attacks for full transparency */}
+      {/* FONT SIZE: Adjust text-[12px] in the labels below to change bottom breakdown text size */}
       {!isMultiAttack && (
         <div className="p-4 bg-background/30 flex justify-center flex-wrap gap-2">
            {Object.entries(result.breakdown).map(([dieType, rolls]) => (
               <div key={dieType} className="flex gap-2 items-center">
-                 <span className="text-[9px] font-bold text-muted-foreground uppercase mr-1">{dieType}</span>
+                 <span className="text-[12px] font-bold text-muted-foreground uppercase mr-1">{dieType}</span>
                  {rolls?.map((r, i) => (
                     <div key={i} className={cn(
                       "w-8 h-8 flex items-center justify-center rounded border font-bold text-sm font-code transition-all",

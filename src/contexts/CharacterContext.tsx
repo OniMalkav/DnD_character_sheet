@@ -15,11 +15,11 @@ type CharacterContextType = {
   toggleProficiency: (skillName: string) => void;
   charInfo: CharInfo;
   updateCharInfo: (field: keyof CharInfo, value: any) => void;
-  inventoryItems: InventoryItem[]; // Structured inventory items
+  inventoryItems: InventoryItem[]; 
   addInventoryItem: () => void;
   updateInventoryItem: (id: number, field: keyof InventoryItem, value: any) => void;
   removeInventoryItem: (id: number) => void;
-  notes: string; // General adventure notes
+  notes: string; 
   setNotes: React.Dispatch<React.SetStateAction<string>>;
   consumables: Consumable[];
   addConsumable: () => void;
@@ -44,6 +44,8 @@ type CharacterContextType = {
   spells: Spell[];
   addSpell: (name: string, level: number) => void;
   removeSpell: (id: number) => void;
+  doubleCarry: boolean; // EFFECT: State for doubling carry capacity (Powerful Build, Enhancements)
+  setDoubleCarry: React.Dispatch<React.SetStateAction<boolean>>;
   handleExport: () => void;
   handleImportClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -60,17 +62,16 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [pb, setPb] = useState(2);
   const [profs, setProfs] = useState(new Set<string>());
   
-  // Structured Inventory Gear
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  // General text notes
   const [notes, setNotes] = useState('');
-
   const [consumables, setConsumables] = useState<Consumable[]>([]);
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([]);
   const [untrackedItems, setUntrackedItems] = useState<UntrackedItem[]>([]);
   const [currency, setCurrency] = useState<Currency>({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
   const [charInfo, setCharInfo] = useState<CharInfo>({ race: '', class: '', level: 1, class2: '', level2: '', background: '', alignment: '', xp: 0, feats: '' });
   const [spellAbility, setSpellAbility] = useState<Stat>('int');
+  const [doubleCarry, setDoubleCarry] = useState(false); // DEFAULT: Standard 15x carry rules
+  
   const [spellSlots, setSpellSlots] = useState<SpellSlots>({
     '1': { max: 4, slots: Array(4).fill(false) },
     '2': { max: 3, slots: Array(3).fill(false) },
@@ -94,28 +95,24 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Inventory CRUD
   const addInventoryItem = () => setInventoryItems(prev => [...prev, { id: Date.now(), name: '', weight: 0 }]);
   const updateInventoryItem = (id: number, field: keyof InventoryItem, value: any) => {
     setInventoryItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeInventoryItem = (id: number) => setInventoryItems(prev => prev.filter(item => item.id !== id));
 
-  // Consumables CRUD
   const addConsumable = () => setConsumables(prev => [...prev, { id: Date.now(), name: '', count: 1, weight: 0 }]);
   const updateConsumable = (id: number, field: keyof Consumable, value: any) => {
     setConsumables(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeConsumable = (id: number) => setConsumables(prev => prev.filter(item => item.id !== id));
 
-  // Equipment CRUD
   const addEquipmentItem = () => setEquipmentItems(prev => [...prev, { id: Date.now(), name: '', weight: 0, isWearing: false }]);
   const updateEquipmentItem = (id: number, field: keyof EquipmentItem, value: any) => {
     setEquipmentItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const removeEquipmentItem = (id: number) => setEquipmentItems(prev => prev.filter(item => item.id !== id));
 
-  // Untracked CRUD
   const addUntrackedItem = () => setUntrackedItems(prev => [...prev, { id: Date.now(), name: '' }]);
   const updateUntrackedItem = (id: number, name: string) => {
     setUntrackedItems(prev => prev.map(item => item.id === id ? { ...item, name } : item));
@@ -183,7 +180,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const handleExport = () => {
     const data = {
       characterName, charInfo, stats, pb, notes, inventoryItems, consumables, equipmentItems, untrackedItems, currency,
-      spellAbility, spellSlots, spells, profs: Array.from(profs)
+      spellAbility, spellSlots, spells, doubleCarry, profs: Array.from(profs)
     };
     const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'character';
     const filename = `adventurers-tome-${safeName}.json`;
@@ -218,6 +215,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
         if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
         if (data.spellAbility) setSpellAbility(data.spellAbility);
+        if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
         
         if (data.spellSlots) {
           setSpellSlots(data.spellSlots);
@@ -246,7 +244,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     updateEquipmentItem, removeEquipmentItem, untrackedItems, addUntrackedItem,
     updateUntrackedItem, removeUntrackedItem, currency, updateCurrency, spellAbility, setSpellAbility,
     spellSlots, updateSpellSlotMax, toggleSpellSlot, longRest, spells, addSpell, removeSpell,
-    handleExport, handleImportClick, fileInputRef
+    doubleCarry, setDoubleCarry, handleExport, handleImportClick, fileInputRef
   };
 
   return (

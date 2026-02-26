@@ -1,7 +1,6 @@
-
 "use client";
 
-import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck } from 'lucide-react';
+import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck, BicepsFlexed } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,8 @@ export default function InventoryTab() {
     consumables, updateConsumable, removeConsumable, addConsumable,
     equipmentItems, updateEquipmentItem, removeEquipmentItem, addEquipmentItem,
     inventoryItems, updateInventoryItem, removeInventoryItem, addInventoryItem,
-    untrackedItems, updateUntrackedItem, removeUntrackedItem, addUntrackedItem
+    untrackedItems, updateUntrackedItem, removeUntrackedItem, addUntrackedItem,
+    doubleCarry, setDoubleCarry
   } = useCharacter();
 
   // EFFECT: Live calculation of total carried load including all structured item categories
@@ -32,8 +32,9 @@ export default function InventoryTab() {
                       equipmentItems.reduce((acc, item) => acc + (item.weight || 0), 0) +
                       inventoryItems.reduce((acc, item) => acc + (item.weight || 0), 0);
 
-  // FORMULA: 2024 Carry Rules - Capacity = Strength Score * 15
-  const carryCapacity = (stats.str || 10) * 15;
+  // FORMULA: 2024 Carry Rules - Capacity = Strength Score * 15. 
+  // EFFECT: Multiplied by 2 if doubleCarry is active (Powerful Build trait, Enlarge spell, etc.)
+  const carryCapacity = (stats.str || 10) * 15 * (doubleCarry ? 2 : 1);
   const isEncumbered = totalWeight > carryCapacity;
   const weightPercentage = Math.min(100, (totalWeight / carryCapacity) * 100);
 
@@ -192,14 +193,16 @@ export default function InventoryTab() {
 
       {/* RIGHT COLUMN: WALLET, UNTRACKED, SUMMARY */}
       <div className="space-y-6">
-        {/* TOTAL WEIGHT SUMMARY: Displays live calculation of current load from all structured lists vs capacity */}
+        {/* TOTAL WEIGHT SUMMARY: Displays live calculation of current load vs capacity */}
         <div className={cn(
           "bg-card border-2 rounded-xl p-4 flex flex-col gap-3 shadow-lg transition-colors",
           isEncumbered ? "border-destructive/50 shadow-destructive/10" : "border-primary/20"
         )}>
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Carried Load / Capacity (STR × 15)</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                Carried Load / Capacity (STR × 15{doubleCarry ? ' × 2' : ''})
+              </span>
               <div className="flex items-baseline gap-2">
                 <span className={cn("text-2xl font-black font-headline", isEncumbered ? "text-destructive" : "text-primary")}>
                   {totalWeight.toFixed(1)}
@@ -207,7 +210,18 @@ export default function InventoryTab() {
                 <span className="text-sm text-muted-foreground font-bold">/ {carryCapacity} Lbs</span>
               </div>
             </div>
-            <Package className={cn("w-8 h-8", isEncumbered ? "text-destructive/40" : "text-primary/40")} />
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setDoubleCarry(!doubleCarry)}
+                className={cn("h-10 w-10 rounded-full transition-all border", doubleCarry ? "text-primary bg-primary/10 border-primary/30" : "text-muted-foreground border-transparent")}
+                title="Double Carry Capacity (Powerful Build, Enlarge, etc.)"
+              >
+                <BicepsFlexed className="w-6 h-6" />
+              </Button>
+              <Package className={cn("w-8 h-8", isEncumbered ? "text-destructive/40" : "text-primary/40")} />
+            </div>
           </div>
           
           <div className="space-y-1">

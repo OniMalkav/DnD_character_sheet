@@ -1,12 +1,13 @@
 "use client";
 
-import { Coins, Package, Plus, Sparkles, X, List } from 'lucide-react';
+import { Coins, Package, Plus, Sparkles, X, List, ScrollText, ShieldCheck } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Accordion, 
   AccordionContent, 
@@ -19,22 +20,27 @@ export default function InventoryTab() {
   const { 
     currency, updateCurrency, 
     consumables, addConsumable, updateConsumable, removeConsumable,
+    equipmentItems, addEquipmentItem, updateEquipmentItem, removeEquipmentItem,
     untrackedItems, addUntrackedItem, updateUntrackedItem, removeUntrackedItem,
     inventory, setInventory 
   } = useCharacter();
 
+  // Effect: Calculates total carried weight for the UI header
+  const totalWeight = consumables.reduce((acc, item) => acc + ((item.weight || 0) * item.count), 0) + 
+                      equipmentItems.reduce((acc, item) => acc + (item.weight || 0), 0);
+
   return (
-    /* Main layout grid: Swaps to a single column on mobile and 2 columns on large screens */
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       
-      {/* LEFT COLUMN: PRIMARY GEAR AND CONSUMABLES */}
+      {/* LEFT COLUMN: CONSUMABLES, EQUIPMENT, AND NOTES */}
       <div className="space-y-6">
-        {/* CONSUMABLES CARD: For items with specific quantities like Potions or Arrows */}
+        {/* CONSUMABLES CARD: Structure updated to include weight input per item */}
         <Card className="flex flex-col">
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="w-5 h-5 text-primary" /> Consumables
             </CardTitle>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Qty / Lbs</span>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <ScrollArea className="flex-1 h-64 pr-3">
@@ -45,8 +51,7 @@ export default function InventoryTab() {
                   </div>
                 )}
                 {consumables.map(item => (
-                  <div key={item.id} className="inventory-item-row">
-                    {/* Item name input */}
+                  <div key={item.id} className="inventory-item-row gap-1">
                     <Input 
                       type="text" 
                       value={item.name}
@@ -55,12 +60,21 @@ export default function InventoryTab() {
                       className="inventory-item-input"
                     />
                     {/* Quantity controls */}
-                    <div className="flex items-center gap-1 bg-background rounded border">
-                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', Math.max(0, (item.count as number) - 1))}>-</Button>
-                      <span className="text-sm font-mono w-6 text-center font-bold text-primary">{item.count}</span>
-                      <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => updateConsumable(item.id, 'count', (item.count as number) + 1)}>+</Button>
+                    <div className="flex items-center bg-background rounded border h-8 px-1">
+                      <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => updateConsumable(item.id, 'count', Math.max(0, (item.count as number) - 1))}>-</Button>
+                      <span className="text-xs font-mono w-5 text-center font-bold text-primary">{item.count}</span>
+                      <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => updateConsumable(item.id, 'count', (item.count as number) + 1)}>+</Button>
                     </div>
-                    {/* Remove button */}
+                    {/* Weight input for consumables */}
+                    <div className="flex items-center bg-background rounded border h-8 w-14 overflow-hidden">
+                      <Input 
+                        type="number"
+                        value={item.weight}
+                        onChange={(e) => updateConsumable(item.id, 'weight', parseFloat(e.target.value) || 0)}
+                        className="w-full h-full border-0 bg-transparent text-center text-xs font-mono px-1 focus-visible:ring-0"
+                        placeholder="Lbs"
+                      />
+                    </div>
                     <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeConsumable(item.id)}><X className="w-4 h-4" /></Button>
                   </div>
                 ))}
@@ -72,18 +86,72 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
-        {/* EQUIPMENT & NOTES: Large text area for armor, weapons, and general inventory details */}
+        {/* EQUIPMENT CARD: Structured list for armor/weapons with Wearing status and Weight */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="w-5 h-5 text-primary" /> Equipment
+            </CardTitle>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Wearing / Lbs</span>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1 h-64 pr-3">
+              <div className="space-y-2">
+                {equipmentItems.length === 0 && (
+                  <div className="text-center text-muted-foreground py-10 text-sm italic">
+                    Add weapons, armor, and gear...
+                  </div>
+                )}
+                {equipmentItems.map(item => (
+                  <div key={item.id} className={cn("inventory-item-row gap-1", item.isWearing && "border-primary/40 bg-primary/5")}>
+                    {/* Wearing Toggle (Checkbox) */}
+                    <div className="px-2 flex items-center">
+                      <Checkbox 
+                        checked={item.isWearing} 
+                        onCheckedChange={(val) => updateEquipmentItem(item.id, 'isWearing', !!val)}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                    </div>
+                    <Input 
+                      type="text" 
+                      value={item.name}
+                      onChange={(e) => updateEquipmentItem(item.id, 'name', e.target.value)}
+                      placeholder="Equipment name"
+                      className="inventory-item-input"
+                    />
+                    {/* Weight input for equipment */}
+                    <div className="flex items-center bg-background rounded border h-8 w-14 overflow-hidden">
+                      <Input 
+                        type="number"
+                        value={item.weight}
+                        onChange={(e) => updateEquipmentItem(item.id, 'weight', parseFloat(e.target.value) || 0)}
+                        className="w-full h-full border-0 bg-transparent text-center text-xs font-mono px-1 focus-visible:ring-0"
+                        placeholder="Lbs"
+                      />
+                    </div>
+                    <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeEquipmentItem(item.id)}><X className="w-4 h-4" /></Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <Button onClick={addEquipmentItem} variant="outline" className="w-full mt-4 border-dashed">
+              <Plus className="w-4 h-4 mr-2" /> Add Equipment
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* NOTES CONTAINER: Separate from structured items for free-form character details */}
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Package className="w-5 h-5 text-primary" /> Equipment & Notes
+              <ScrollText className="w-5 h-5 text-primary" /> Adventure Notes
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex min-h-[250px]">
+          <CardContent className="flex-1 flex min-h-[150px]">
             <Textarea
               value={inventory}
               onChange={(e) => setInventory(e.target.value)}
-              placeholder="Armor, weapons, and other long-form notes..."
+              placeholder="Record quest notes, NPC names, and other details..."
               className="flex-1 w-full font-code text-sm resize-none leading-relaxed bg-background"
               spellCheck={false}
             />
@@ -91,9 +159,18 @@ export default function InventoryTab() {
         </Card>
       </div>
 
-      {/* RIGHT COLUMN: CURRENCY AND MISCELLANEOUS ITEMS */}
+      {/* RIGHT COLUMN: WALLET, UNTRACKED, AND TOTAL WEIGHT SUMMARY */}
       <div className="space-y-6">
-        {/* WALLET CARD: For tracking copper, silver, electrum, gold, and platinum */}
+        {/* TOTAL WEIGHT SUMMARY: Effect displays live calculation of current load */}
+        <div className="bg-card border-2 border-primary/20 rounded-xl p-4 flex justify-between items-center shadow-lg">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Carried Load</span>
+            <span className="text-2xl font-black text-primary font-headline">{totalWeight.toFixed(1)} Lbs</span>
+          </div>
+          <Package className="w-8 h-8 text-primary/40" />
+        </div>
+
+        {/* WALLET CARD */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -121,7 +198,7 @@ export default function InventoryTab() {
           </CardContent>
         </Card>
 
-        {/* UNTRACKED CONTENT: Collapsible list for general loot and miscellaneous items */}
+        {/* UNTRACKED CONTENT: Collapsible accordion for miscellaneous loot */}
         <Accordion type="single" collapsible defaultValue="untracked" className="w-full">
           <AccordionItem value="untracked" className="border-none">
             <Card className="overflow-hidden">

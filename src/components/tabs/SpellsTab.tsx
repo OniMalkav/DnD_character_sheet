@@ -12,8 +12,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { Stat } from '@/lib/types';
 
-// Update this to wherever you saved your new, clean JSON file!
-import spellData from '@/lib/spells/spells_2024.json';
+
+
+
+// Update this to wherever you saved your new spell list!
+import spellData from '@/lib/spells/spells_2024_enriched.json';
+
+
 
 export default function SpellsTab() {
   const {
@@ -219,6 +224,38 @@ export default function SpellsTab() {
                                   </div>
 
                                   {/* TAGS ROW: Time, Range, Duration, Concentration, Ritual */}
+                                  {/* MECHANICS ROW: Highlighted Damage & Save DC */}
+{(fullSpellDetails.damageRoll || fullSpellDetails.saveRequired) && (
+  <div className="flex gap-4 p-3 bg-neutral-950 rounded-lg border border-neutral-800 shadow-inner mt-2">
+    {fullSpellDetails.damageRoll && (
+      <div className="flex flex-col">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Damage</span>
+        <span className="text-red-400 font-black text-xl flex items-baseline gap-1">
+          {fullSpellDetails.damageRoll} 
+          {fullSpellDetails.damageType && (
+            <span className="text-xs font-normal text-red-300/70 capitalize">
+              {fullSpellDetails.damageType}
+            </span>
+          )}
+        </span>
+      </div>
+    )}
+    
+    {/* Divider if it has both */}
+    {(fullSpellDetails.damageRoll && fullSpellDetails.saveRequired) && (
+      <div className="w-px bg-neutral-800 mx-2"></div>
+    )}
+
+    {fullSpellDetails.saveRequired && (
+      <div className="flex flex-col">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Save Required</span>
+        <span className="text-orange-400 font-black text-xl uppercase">
+          {fullSpellDetails.saveRequired}
+        </span>
+      </div>
+    )}
+  </div>
+)}
                                   <div className="flex flex-wrap gap-2 text-xs font-mono">
                                     <span className="bg-neutral-900 text-neutral-300 px-2 py-1 rounded border border-neutral-800 capitalize">
                                       ⏱️ {fullSpellDetails.actionType}

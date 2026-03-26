@@ -1,4 +1,6 @@
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+// 👇 ADD /lite to the end of this import
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore/lite";
+// ... leave everything else exactly the same!
 import { db } from "./firebase";
 import type { Stats, CharInfo, Currency, Consumable, EquipmentItem, InventoryItem, UntrackedItem, Spell, SpellSlots, Stat } from './types';
 

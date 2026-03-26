@@ -8,6 +8,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { DiceCounts, DiceType, RollMode, RollResult, RollBreakdown, AttackResult, DieRoll, DieRollWithMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+// CENTRALIZED STYLE THEME FOR EASY EDITING
+const THEME = {
+  colors: {
+    primary: '#c77c1aff',      // Amber (Main Theme)
+    advantage: '#72b7dfff',    // Green/Blue
+    disadvantage: '#EF4444',   // Red
+    rollButton: '#c77c1aff',   // Amber
+    rollButtonText: '#FFFFFF', // White
+  }
+};
+
 type DiceRollerTabProps = {
     counts: DiceCounts;
     setCounts: React.Dispatch<React.SetStateAction<DiceCounts>>;
@@ -29,7 +40,7 @@ export default function DiceRollerTab({
     counts, setCounts, modifier, setModifier, damageMod, setDamageMod, rollMode, setRollMode, 
     isRolling, setIsRolling, setResult, setHistory, setSpecialEffect, result
 }: DiceRollerTabProps) {
-
+// ... existing logic ...
     const updateCount = (dieType: DiceType, delta: number) => {
         setCounts(prev => ({
           ...prev,
@@ -227,12 +238,14 @@ export default function DiceRollerTab({
                     <Button 
                         onClick={() => setRollMode('advantage')} 
                         variant={rollMode === 'advantage' ? 'success' : 'ghost'} 
-                        className={cn("flex-1 uppercase font-bold", rollMode !== 'advantage' && "text-success hover:bg-success/20 hover:text-success")}
+                        className="flex-1 uppercase font-bold"
+                        style={rollMode !== 'advantage' ? { color: THEME.colors.advantage } : {}}
                     >Advantage</Button>
                     <Button 
                         onClick={() => setRollMode('disadvantage')} 
                         variant={rollMode === 'disadvantage' ? 'destructive' : 'ghost'} 
-                        className={cn("flex-1 uppercase font-bold", rollMode !== 'disadvantage' && "text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                        className="flex-1 uppercase font-bold"
+                        style={rollMode !== 'disadvantage' ? { color: THEME.colors.disadvantage } : {}}
                     >Disadvantage</Button>
                 </CardContent>
             </Card>
@@ -251,8 +264,12 @@ export default function DiceRollerTab({
             <Button 
                 onClick={rollDice} 
                 disabled={!hasSelections || isRolling} 
-                className="w-full py-8 text-2xl uppercase tracking-widest shadow-xl transition-all transform active:scale-95"
+                className="w-full py-8 text-2xl uppercase tracking-widest shadow-xl transition-all transform active:scale-95 border-0"
                 size="lg"
+                style={{ 
+                  backgroundColor: isRolling || !hasSelections ? 'rgba(163, 163, 163, 0.2)' : THEME.colors.rollButton,
+                  color: THEME.colors.rollButtonText
+                }}
             >
                 {isRolling ? (
                     <>

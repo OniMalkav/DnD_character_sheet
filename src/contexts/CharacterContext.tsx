@@ -1,9 +1,11 @@
 "use client";
 
-import React, { createContext, useState, useContext, useRef } from 'react';
+import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import type { Stats, CharInfo, Currency, Consumable, EquipmentItem, InventoryItem, UntrackedItem, Spell, SpellSlots, Stat } from '@/lib/types';
-
+import { saveCharacterToCloud, loadCharacterFromCloud } from '../lib/cloudSync';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 type CharacterContextType = {
   characterName: string;
   setCharacterName: React.Dispatch<React.SetStateAction<string>>;
@@ -15,7 +17,7 @@ type CharacterContextType = {
   toggleProficiency: (skillName: string) => void;
   charInfo: CharInfo;
   updateCharInfo: (field: keyof CharInfo, value: any) => void;
-  inventoryItems: InventoryItem[]; 
+  inventoryItems: InventoryItem[];
   addInventoryItem: () => void;
   updateInventoryItem: (id: number, field: keyof InventoryItem, value: any) => void;
   removeInventoryItem: (id: number) => void;
@@ -23,7 +25,7 @@ type CharacterContextType = {
   addBagItem: () => void;
   updateBagItem: (id: number, field: keyof InventoryItem, value: any) => void;
   removeBagItem: (id: number) => void;
-  notes: string; 
+  notes: string;
   setNotes: React.Dispatch<React.SetStateAction<string>>;
   consumables: Consumable[];
   addConsumable: () => void;
@@ -52,7 +54,12 @@ type CharacterContextType = {
   setDoubleCarry: React.Dispatch<React.SetStateAction<boolean>>;
   handleExport: () => void;
   handleImportClick: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleCloudSave: () => Promise<void>;
+  handleCloudLoad: () => Promise<void>;
+  user: User | null;
+  handleSignIn: () => Promise<void>;
+  handleSignOut: () => Promise<void>;
 };
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
@@ -61,11 +68,40 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast({ title: "Signed In", description: "You are now securely connected to the cloud." });
+    } catch (error) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Sign In Failed", description: "Failed to authenticate with Google." });
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Signed Out", description: "You have been logged out." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Sign Out Failed", description: "Could not log out." });
+    }
+  };
+
   const [characterName, setCharacterName] = useState('');
   const [stats, setStats] = useState<Stats>({ str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 });
   const [pb, setPb] = useState(2);
   const [profs, setProfs] = useState(new Set<string>());
-  
+
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [bagItems, setBagItems] = useState<InventoryItem[]>([]); // DEFAULT: Empty Bag of Holding
   const [notes, setNotes] = useState('');
@@ -76,10 +112,10 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [charInfo, setCharInfo] = useState<CharInfo>({ race: '', class: '', level: 1, class2: '', level2: '', background: '', alignment: '', xp: 0, feats: '' });
   const [spellAbility, setSpellAbility] = useState<Stat>('int');
   const [doubleCarry, setDoubleCarry] = useState(false); // DEFAULT: Standard 15x carry rules
-  
+
   const [spellSlots, setSpellSlots] = useState<SpellSlots>({
-    '1': { max: 4, slots: Array(4).fill(false) },
-    '2': { max: 3, slots: Array(3).fill(false) },
+    '1': { max: 0, slots: [] },
+    '2': { max: 0, slots: [] },
     '3': { max: 0, slots: [] },
     '4': { max: 0, slots: [] },
     '5': { max: 0, slots: [] },
@@ -133,13 +169,13 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const updateCurrency = (type: keyof Currency, value: number) => {
     setCurrency(prev => ({ ...prev, [type]: Math.max(0, value || 0) }));
   };
-  
+
   const addSpell = (name: string, level: number) => {
     if (!name.trim()) return;
     setSpells(prev => [...prev, { id: Date.now(), name, level }].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)));
   };
   const removeSpell = (id: number) => setSpells(prev => prev.filter(s => s.id !== id));
-  
+
   const updateSpellSlotMax = (level: string, max: number) => {
     const newMax = Math.max(0, max || 0);
     setSpellSlots(prev => {
@@ -173,7 +209,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     });
   };
-  
+
   const longRest = () => {
     setSpellSlots(prev => {
       const reset = { ...prev };
@@ -186,6 +222,74 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return reset;
     });
     toast({ title: "Long Rest", description: "Spell slots have been restored." });
+  };
+
+  const handleCloudSave = async () => {
+    console.log("Starting cloud save process...");
+    if (!user) {
+      toast({ variant: "destructive", title: "Wait", description: "You must be signed in to save characters." });
+      return;
+    }
+    if (!characterName.trim()) {
+      console.log("No character name provided.");
+      toast({ variant: "destructive", title: "Error", description: "Character must have a name to save to the cloud." });
+      return;
+    }
+    const data = {
+      characterName, charInfo, stats, pb, notes, inventoryItems, bagItems, consumables, equipmentItems, untrackedItems, currency,
+      spellAbility, spellSlots, spells, doubleCarry, profs: Array.from(profs)
+    };
+    try {
+      const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      console.log("Saving character as:", `char-${safeName}`, "Data:", data);
+      await saveCharacterToCloud(user.uid, `char-${safeName}`, data);
+      console.log("Cloud save promise resolved!");
+      toast({ title: "Cloud Save Successful", description: "Character backed up securely to your account." });
+    } catch (error) {
+      console.error("Caught error in handleCloudSave:", error);
+      toast({ variant: "destructive", title: "Cloud Save Failed", description: "Could not write to Firebase database." });
+    }
+  };
+
+  const handleCloudLoad = async () => {
+    if (!user) {
+      toast({ variant: "destructive", title: "Wait", description: "You must be signed in to load characters." });
+      return;
+    }
+    if (!characterName.trim()) {
+      toast({ variant: "destructive", title: "Wait", description: "Please enter the exact Character Name you used to save." });
+      return;
+    }
+    const safeName = characterName.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    try {
+      const data = await loadCharacterFromCloud(user.uid, `char-${safeName}`);
+      if (!data) {
+        toast({ variant: "destructive", title: "Not Found", description: "No character found in the cloud with this name." });
+        return;
+      }
+      
+      if (data.characterName !== undefined) setCharacterName(data.characterName);
+      if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
+      if (data.stats) setStats(data.stats);
+      if (data.pb) setPb(data.pb);
+      if (data.notes !== undefined) setNotes(data.notes);
+      if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
+      if (data.bagItems !== undefined) setBagItems(data.bagItems);
+      if (data.currency) setCurrency(data.currency);
+      if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
+      if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
+      if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
+      if (data.spellAbility) setSpellAbility(data.spellAbility);
+      if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
+      
+      if (data.spellSlots) setSpellSlots(data.spellSlots);
+      if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
+      if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
+
+      toast({ title: "Cloud Load Successful", description: "Character data restored from Firestore." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Cloud Load Failed", description: "Could not pull from Firebase." });
+    }
   };
 
   const handleExport = () => {
@@ -228,15 +332,15 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
         if (data.spellAbility) setSpellAbility(data.spellAbility);
         if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
-        
+
         if (data.spellSlots) {
           setSpellSlots(data.spellSlots);
         }
 
         if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
         if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
-        
-        if(e.target) e.target.value = '';
+
+        if (e.target) e.target.value = '';
         toast({ title: "Import Successful", description: "Character data has been loaded." });
       } catch (error) {
         console.error("Error importing character:", error);
@@ -245,7 +349,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
     reader.readAsText(file);
   };
-  
+
   const handleImportClick = () => fileInputRef.current?.click();
 
   const value = {
@@ -257,7 +361,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     updateEquipmentItem, removeEquipmentItem, untrackedItems, addUntrackedItem,
     updateUntrackedItem, removeUntrackedItem, currency, updateCurrency, spellAbility, setSpellAbility,
     spellSlots, updateSpellSlotMax, toggleSpellSlot, longRest, spells, addSpell, removeSpell,
-    doubleCarry, setDoubleCarry, handleExport, handleImportClick, fileInputRef
+    doubleCarry, setDoubleCarry, handleExport, handleImportClick, fileInputRef,
+    handleCloudSave, handleCloudLoad, user, handleSignIn, handleSignOut
   };
 
   return (

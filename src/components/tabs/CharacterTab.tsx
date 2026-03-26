@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Download, Upload, PenLine, ScrollText } from 'lucide-react';
+import { User, Download, Upload, PenLine, ScrollText, CloudUpload, CloudDownload, LogIn, LogOut } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+// CENTRALIZED STYLE THEME FOR EASY EDITING
+const THEME = {
+  colors: {
+    primary: '#c77c1aff',      // Amber (Main Theme)
+    cloud: '#818CF8',          // Indigo-400
+    labels: '#A3A3A3',         // Neutral 400
+    textMuted: '#A3A3A3',      // Neutral 400
+  }
+};
+
 export default function CharacterTab() {
   const {
     characterName, setCharacterName,
     charInfo, updateCharInfo,
     notes, setNotes,
-    handleExport, handleImportClick
+    handleExport, handleImportClick,
+    handleCloudSave, handleCloudLoad,
+    user, handleSignIn, handleSignOut
   } = useCharacter();
 
   return (
@@ -21,27 +33,52 @@ export default function CharacterTab() {
       <Card className="shadow-xl">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                  <User className="w-6 h-6 text-primary" /> Character Profile
-                </CardTitle>
-                <CardDescription>Edit your character's core information.</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleExport} variant="secondary">
-                  <Download className="w-4 h-4 mr-2" /> Export
+            <div>
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <User className="w-6 h-6" style={{ color: THEME.colors.primary }} /> Character Profile
+              </CardTitle>
+              <CardDescription>Edit your character's core information.</CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {user ? (
+                <Button onClick={handleSignOut} variant="ghost" className="mr-2" style={{ color: THEME.colors.textMuted }} title={`Signed in as ${user.email}`}>
+                  <LogOut className="w-4 h-4 mr-2" /> Sign Out
                 </Button>
-                <Button onClick={handleImportClick} variant="secondary">
-                  <Upload className="w-4 h-4 mr-2" /> Import
+              ) : (
+                <Button onClick={handleSignIn} className="mr-2 border-0" style={{ backgroundColor: THEME.colors.primary, color: '#FFFFFF' }}>
+                  <LogIn className="w-4 h-4 mr-2" /> Sign In to Cloud
                 </Button>
-              </div>
+              )}
+              <Button
+                onClick={handleCloudLoad}
+                variant="outline"
+                className="hover:bg-indigo-500/10"
+                style={{ color: THEME.colors.cloud, borderColor: 'rgba(129, 140, 248, 0.3)' }}
+              >
+                <CloudDownload className="w-4 h-4 mr-2" /> Cloud Load
+              </Button>
+              <Button
+                onClick={handleCloudSave}
+                variant="outline"
+                className="hover:bg-indigo-500/10"
+                style={{ color: THEME.colors.cloud, borderColor: 'rgba(129, 140, 248, 0.3)' }}
+              >
+                <CloudUpload className="w-4 h-4 mr-2" /> Cloud Save
+              </Button>
+              <Button onClick={handleImportClick} variant="secondary">
+                <Upload className="w-4 h-4 mr-2" /> Import
+              </Button>
+              <Button onClick={handleExport} variant="secondary">
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="char-name-main" className="text-xs font-bold uppercase tracking-widest">Character Name</Label>
+            <Label htmlFor="char-name-main" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Character Name</Label>
             <div className="relative mt-1">
-              <PenLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <PenLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: THEME.colors.textMuted }} />
               <Input
                 id="char-name-main"
                 type="text"
@@ -54,38 +91,38 @@ export default function CharacterTab() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="class1" className="text-xs font-bold uppercase tracking-widest">Class & Level</Label>
+              <Label htmlFor="class1" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Class & Level</Label>
               <div className="flex gap-2 mt-1">
                 <Input id="class1" type="text" value={charInfo.class} onChange={(e) => updateCharInfo('class', e.target.value)} placeholder="e.g. Barbarian" />
                 <Input type="number" value={charInfo.level} onChange={(e) => updateCharInfo('level', e.target.value)} placeholder="Lvl" className="w-20 text-center font-code" />
               </div>
             </div>
             <div>
-              <Label htmlFor="class2" className="text-xs font-bold uppercase tracking-widest">Multiclass (Optional)</Label>
+              <Label htmlFor="class2" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Multiclass (Optional)</Label>
               <div className="flex gap-2 mt-1">
                 <Input id="class2" type="text" value={charInfo.class2} onChange={(e) => updateCharInfo('class2', e.target.value)} placeholder="e.g. Fighter" />
                 <Input type="number" value={charInfo.level2} onChange={(e) => updateCharInfo('level2', e.target.value)} placeholder="Lvl" className="w-20 text-center font-code" />
               </div>
             </div>
             <div>
-              <Label htmlFor="race" className="text-xs font-bold uppercase tracking-widest">Race</Label>
+              <Label htmlFor="race" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Race</Label>
               <Input id="race" type="text" value={charInfo.race} onChange={(e) => updateCharInfo('race', e.target.value)} placeholder="e.g. Goliath" className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="background" className="text-xs font-bold uppercase tracking-widest">Background</Label>
+              <Label htmlFor="background" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Background</Label>
               <Input id="background" type="text" value={charInfo.background} onChange={(e) => updateCharInfo('background', e.target.value)} placeholder="e.g. Outlander" className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="alignment" className="text-xs font-bold uppercase tracking-widest">Alignment</Label>
+              <Label htmlFor="alignment" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Alignment</Label>
               <Input id="alignment" type="text" value={charInfo.alignment} onChange={(e) => updateCharInfo('alignment', e.target.value)} placeholder="e.g. Chaotic Good" className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="xp" className="text-xs font-bold uppercase tracking-widest">Experience Points</Label>
+              <Label htmlFor="xp" className="text-xs font-bold uppercase tracking-widest" style={{ color: THEME.colors.labels }}>Experience Points</Label>
               <Input id="xp" type="number" value={charInfo.xp} onChange={(e) => updateCharInfo('xp', e.target.value)} placeholder="0" className="mt-1 font-code" />
             </div>
           </div>
           <div className="sm:col-span-2 lg:col-span-3">
-            <Label htmlFor="feats" className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <Label htmlFor="feats" className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: THEME.colors.labels }}>
               <ScrollText className="w-3 h-3" /> Feats & Traits
             </Label>
             <Textarea
@@ -103,7 +140,7 @@ export default function CharacterTab() {
       <Card className="flex flex-col shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <ScrollText className="w-5 h-5 text-primary" /> Adventure Notes
+            <ScrollText className="w-5 h-5" style={{ color: THEME.colors.primary }} /> Adventure Notes
           </CardTitle>
           <CardDescription>Keep track of session details, plot hooks, and backstory.</CardDescription>
         </CardHeader>

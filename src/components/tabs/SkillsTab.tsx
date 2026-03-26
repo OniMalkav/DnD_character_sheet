@@ -14,6 +14,16 @@ import { calculateModifier } from '@/lib/utils';
 import type { RollMode, RollResult, DiceCounts, SkillBonus } from '@/lib/types';
 
 
+// CENTRALIZED STYLE THEME FOR EASY EDITING
+const THEME = {
+  colors: {
+    advantage: '#72b7dfff',    // Green (from SpellsTab attackBonus)
+    disadvantage: '#EF4444',   // Red
+    icons: '#c77c1aff',        // Amber (from SpellsTab saveDc)
+    textMuted: '#A3A3A3',      // Neutral 400
+  }
+};
+
 type SkillsTabProps = {
     rollMode: RollMode;
     setRollMode: React.Dispatch<React.SetStateAction<RollMode>>;
@@ -137,12 +147,14 @@ export default function SkillsTab({
                     <Button 
                         onClick={() => setRollMode('advantage')} 
                         variant={rollMode === 'advantage' ? 'success' : 'ghost'} 
-                        className={cn("flex-1 uppercase font-bold", rollMode !== 'advantage' && "text-success hover:bg-success/20 hover:text-success")}
+                        className="flex-1 uppercase font-bold"
+                        style={rollMode !== 'advantage' ? { color: THEME.colors.advantage } : {}}
                     >Advantage</Button>
                     <Button 
                         onClick={() => setRollMode('disadvantage')} 
                         variant={rollMode === 'disadvantage' ? 'destructive' : 'ghost'} 
-                        className={cn("flex-1 uppercase font-bold", rollMode !== 'disadvantage' && "text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                        className="flex-1 uppercase font-bold"
+                        style={rollMode !== 'disadvantage' ? { color: THEME.colors.disadvantage } : {}}
                     >Disadvantage</Button>
                 </CardContent>
             </Card>
@@ -150,7 +162,7 @@ export default function SkillsTab({
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <User className="w-5 h-5 text-primary" /> Ability Scores
+                        <User className="w-5 h-5" style={{ color: THEME.colors.icons }} /> Ability Scores
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -171,7 +183,7 @@ export default function SkillsTab({
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Plus className="w-5 h-5 text-primary" /> Bonus Dice
+                        <Plus className="w-5 h-5" style={{ color: THEME.colors.icons }} /> Bonus Dice
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -187,7 +199,7 @@ export default function SkillsTab({
                             </Button>
                         ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-2 italic">For Guidance, Bardic Inspiration, etc.</p>
+                    <p className="text-[10px] mt-2 italic" style={{ color: THEME.colors.textMuted }}>For Guidance, Bardic Inspiration, etc.</p>
                 </CardContent>
             </Card>
 

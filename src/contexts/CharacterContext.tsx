@@ -126,6 +126,52 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   const [spells, setSpells] = useState<Spell[]>([]);
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from LocalStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('dnd_character_data');
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        if (data.characterName !== undefined) setCharacterName(data.characterName);
+        if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
+        if (data.stats) setStats(data.stats);
+        if (data.pb) setPb(data.pb);
+        if (data.notes !== undefined) setNotes(data.notes);
+        if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
+        if (data.bagItems !== undefined) setBagItems(data.bagItems);
+        if (data.currency) setCurrency(data.currency);
+        if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
+        if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
+        if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
+        if (data.spellAbility) setSpellAbility(data.spellAbility);
+        if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
+        if (data.spellSlots) setSpellSlots(data.spellSlots);
+        if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
+        if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
+      } catch (error) {
+        console.error("Error loading from localStorage:", error);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to LocalStorage on state change
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const data = {
+      characterName, charInfo, stats, pb, notes, inventoryItems, bagItems, consumables, equipmentItems, untrackedItems, currency,
+      spellAbility, spellSlots, spells, doubleCarry, profs: Array.from(profs)
+    };
+    
+    localStorage.setItem('dnd_character_data', JSON.stringify(data));
+  }, [
+    isLoaded, characterName, charInfo, stats, pb, notes, inventoryItems, bagItems, consumables, 
+    equipmentItems, untrackedItems, currency, spellAbility, spellSlots, spells, doubleCarry, profs
+  ]);
+
   const updateStat = (stat: Stat, val: number) => setStats(prev => ({ ...prev, [stat]: val || 0 }));
   const updateCharInfo = (field: keyof CharInfo, val: any) => setCharInfo(prev => ({ ...prev, [field]: val }));
   const toggleProficiency = (skillName: string) => {

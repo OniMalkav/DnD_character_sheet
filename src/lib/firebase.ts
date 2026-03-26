@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore"; // Changed this import
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
@@ -15,7 +15,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const db = getFirestore(app);
+// THE FIX: Force long polling to bypass strict browser/network blocks
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
+
 const auth = getAuth(app);
 
 export { app, db, auth };

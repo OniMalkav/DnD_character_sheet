@@ -45,18 +45,23 @@ export async function saveCharacterToCloud(userId: string, characterId: string, 
  * @returns The character data if it exists, otherwise null
  */
 export async function loadCharacterFromCloud(userId: string, characterId: string): Promise<CharacterDataPayload | null> {
+  // THIS LINE IS THE KEY:
+  console.log("DEBUG: Attempting to load from path:", `users/${userId}/characters/${characterId}`);
+
   try {
     const docRef = doc(db, "users", userId, "characters", characterId);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
+      console.log("DEBUG: Success! Data found.");
       return docSnap.data() as CharacterDataPayload;
     } else {
-      console.log("No such character document!");
+      console.log("DEBUG: Failed. No document exists at that path.");
       return null;
     }
   } catch (error) {
-    console.error("Error loading character from cloud: ", error);
+    console.error("DEBUG: Error during fetch:", error);
     throw error;
   }
 }
+

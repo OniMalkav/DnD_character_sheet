@@ -1,5 +1,4 @@
-// 👇 ADD /lite to the end of this import
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore/lite";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore/lite";
 // ... leave everything else exactly the same!
 import { db } from "./firebase";
 import type { Stats, CharInfo, Currency, Consumable, EquipmentItem, InventoryItem, UntrackedItem, Spell, SpellSlots, Stat } from './types';
@@ -36,6 +35,25 @@ export async function saveCharacterToCloud(userId: string, characterId: string, 
     return true;
   } catch (error) {
     console.error("Error saving character to cloud: ", error);
+    throw error;
+  }
+}
+
+/**
+ * Lists all characters saved in the cloud for a specific user
+ * @param userId The authenticated user's ID
+ * @returns Array of character names and IDs
+ */
+export async function listCharactersFromCloud(userId: string) {
+  try {
+    const colRef = collection(db, "users", userId, "characters");
+    const querySnapshot = await getDocs(colRef);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: (doc.data() as CharacterDataPayload).characterName
+    }));
+  } catch (error) {
+    console.error("Error listing characters: ", error);
     throw error;
   }
 }

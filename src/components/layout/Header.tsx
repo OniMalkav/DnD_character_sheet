@@ -12,11 +12,13 @@ type HeaderProps = {
 };
 
 const TABS: { id: ActiveTab; label: string }[] = [
+    { id: 'home', label: 'Home' },
     { id: 'dice', label: 'Dice' },
     { id: 'skills', label: 'Skills' },
     { id: 'inventory', label: 'Inv' },
     { id: 'character', label: 'Char' },
     { id: 'spells', label: 'Spells' },
+    { id: 'summon', label: 'Summon' },
 ];
 
 export default function Header({ activeTab, setActiveTab, setShowHistory }: HeaderProps) {
@@ -24,9 +26,7 @@ export default function Header({ activeTab, setActiveTab, setShowHistory }: Head
     <header className="bg-card/50 backdrop-blur-sm border-b border-border p-3 shadow-lg sticky top-0 z-40">
       <div className="max-w-5xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="bg-primary p-2 rounded-lg">
-            <Dices className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src="/favicon.ico" alt="Logo" className="w-10 h-10 rounded-lg object-contain" />
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent hidden sm:block font-headline">
             Adventurer's Tome
           </h1>

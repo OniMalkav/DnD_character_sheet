@@ -10,11 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
   colors: {
-    positiveMod: '#72b7dfff', // Green (matching SpellsTab attackBonus)
-    negativeMod: '#EF4444',   // Red
-    labels: '#A3A3A3',        // Neutral 400
-    statBadgeText: '#A3A3A3',
-    statBadgeBg: '#171717',   // Neutral 900
+    positiveMod: 'var(--mod-positive)',
+    negativeMod: 'var(--mod-negative)',
+    labels: 'var(--muted-foreground)',
+    statBadgeText: 'var(--muted-foreground)',
+    statBadgeBg: 'var(--background)',
   }
 };
 
@@ -24,7 +24,11 @@ type SkillListProps = {
 };
 
 export default function SkillList({ isRolling, onRoll }: SkillListProps) {
-  const { stats, profs, pb, toggleProficiency } = useCharacter();
+  const { stats, profs, pb, toggleProficiency, charInfo } = useCharacter();
+
+  const totalLevel = (parseInt(charInfo.level?.toString() || '1') || 0) + (parseInt(charInfo.level2?.toString() || '0') || 0);
+  const mathPb = 1 + Math.ceil(totalLevel / 4);
+  const activePb = pb || mathPb;
 
   return (
     <Card>
@@ -50,7 +54,7 @@ export default function SkillList({ isRolling, onRoll }: SkillListProps) {
           {SKILLS_DATA.map((skill, index) => {
             const isProficient = profs.has(skill.name);
             const statMod = calculateModifier(stats[skill.stat]);
-            const totalMod = statMod + (isProficient ? pb : 0);
+            const totalMod = statMod + (isProficient ? activePb : 0);
             const sign = totalMod >= 0 ? '+' : '';
             
             return (

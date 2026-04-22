@@ -15,8 +15,8 @@ export default function TabButton({ onClick, isActive, children }: TabButtonProp
       className={cn(
         "px-3 py-1.5 rounded-md text-sm font-bold transition-all",
         isActive
-          ? 'bg-muted text-foreground shadow'
-          : 'text-muted-foreground hover:text-foreground'
+          ? 'text-primary border-b-2 border-primary rounded-none px-3 py-1.5'
+          : 'text-muted-foreground hover:text-foreground px-3 py-1.5'
       )}
     >
       {children}

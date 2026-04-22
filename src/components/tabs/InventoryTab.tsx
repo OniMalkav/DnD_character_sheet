@@ -14,28 +14,35 @@ import {
   AccordionTrigger,
   AccordionContent 
 } from "@/components/ui/accordion";
-import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn, calculateModifier } from '@/lib/utils';
 
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
   colors: {
-    primary: '#c77c1aff',      // Amber (Main Theme Color)
-    consumables: '#F48C25',    // Amber-ish
-    equipment: '#60A5FA',      // Blue
-    inventory: '#A8A29E',      // Gray
-    encumbered: '#EF4444',     // Red
-    wallet: '#EAB308',         // Yellow-500
+    primary: 'var(--primary)',
+    consumables: 'var(--inv-consumables)',
+    equipment: 'var(--inv-equipment)',
+    inventory: 'var(--inv-inventory)',
+    encumbered: 'var(--destructive)',
+    wallet: 'var(--inv-wallet)',
     currency: {
-      cp: '#C2410C',           // orange-700
-      sp: '#94A3B8',           // slate-400
-      ep: '#93C5FD',           // blue-300
-      gp: '#EAB308',           // yellow-500
-      pp: '#E2E8F0'            // slate-200
+      cp: 'var(--cp)',
+      sp: 'var(--sp)',
+      ep: 'var(--ep)',
+      gp: 'var(--gp)',
+      pp: 'var(--pp)'
     },
-    bag: '#818CF8',            // Indigo-400
-    untracked: '#34D399',      // Emerald-400
-    textMain: '#FFFFFF',       // White
-    textMuted: '#A3A3A3',      // Neutral 400
+    bag: 'var(--inv-bag)',
+    untracked: 'var(--inv-untracked)',
+    textMain: 'var(--foreground)',
+    textMuted: 'var(--muted-foreground)',
   }
 };
 
@@ -48,7 +55,7 @@ export default function InventoryTab() {
     inventoryItems, updateInventoryItem, removeInventoryItem, addInventoryItem,
     bagItems, updateBagItem, removeBagItem, addBagItem,
     untrackedItems, updateUntrackedItem, removeUntrackedItem, addUntrackedItem,
-    doubleCarry, setDoubleCarry
+    doubleCarry, setDoubleCarry, pb, setModifier
   } = useCharacter();
 
   // EFFECT: Live calculation of total carried load including all structured item categories
@@ -126,7 +133,7 @@ export default function InventoryTab() {
             <CardTitle className="flex items-center gap-2 text-base">
               <ShieldCheck className="w-5 h-5" style={{ color: THEME.colors.equipment }} /> Equipment
             </CardTitle>
-            <span className="text-[10px] uppercase font-bold" style={{ color: THEME.colors.textMuted }}>Wearing / Lbs</span>
+            <span className="text-[10px] uppercase font-bold" style={{ color: THEME.colors.textMuted }}>Wearing / Type / AC • Hit / Lbs</span>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <ScrollArea className="flex-1 h-64 pr-3">
@@ -136,31 +143,80 @@ export default function InventoryTab() {
                     Add weapons, armor, and gear...
                   </div>
                 )}
-                {equipmentItems.map(item => (
-                  <div 
-                    key={item.id} 
-                    className="inventory-item-row gap-1"
-                    style={item.isWearing ? { borderColor: 'rgba(199, 124, 26, 0.4)', backgroundColor: 'rgba(199, 124, 26, 0.05)' } : {}}
-                  >
-                    <div className="px-2 flex items-center">
-                      <Checkbox 
-                        checked={item.isWearing} 
-                        onCheckedChange={(val) => updateEquipmentItem(item.id, 'isWearing', !!val)}
-                        className="data-[state=checked]:bg-primary"
-                        style={item.isWearing ? { backgroundColor: THEME.colors.primary, borderColor: THEME.colors.primary } : {}}
+                {equipmentItems.map(item => {
+                  const isWeapon = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].includes(item.armorType || '');
+                  
+                  return (
+                    <div 
+                      key={item.id} 
+                      className="inventory-item-row gap-1"
+                      style={item.isWearing ? { borderColor: 'rgba(199, 124, 26, 0.8)', backgroundColor: 'transparent' } : {}}
+                    >
+                      <div className="px-2 flex items-center">
+                        <Checkbox 
+                          checked={item.isWearing} 
+                          onCheckedChange={(val) => updateEquipmentItem(item.id, 'isWearing', !!val)}
+                          className="data-[state=checked]:bg-primary"
+                          style={item.isWearing ? { backgroundColor: THEME.colors.primary, borderColor: THEME.colors.primary } : {}}
+                        />
+                      </div>
+                      <Input 
+                        type="text" 
+                        value={item.name ?? ''}
+                        onChange={(e) => updateEquipmentItem(item.id, 'name', e.target.value)}
+                        placeholder={isWeapon ? "Weapon name" : "Equipment name"}
+                        className="inventory-item-input"
                       />
-                    </div>
-                    <Input 
-                      type="text" 
-                      value={item.name}
-                      onChange={(e) => updateEquipmentItem(item.id, 'name', e.target.value)}
-                      placeholder="Equipment name"
-                      className="inventory-item-input"
-                    />
-                    <div className="flex items-center bg-background rounded border h-8 w-14 overflow-hidden">
+                      <div className="flex items-center gap-1">
+                        <Select 
+                          value={item.armorType || 'None'} 
+                          onValueChange={(val) => {
+                            updateEquipmentItem(item.id, 'armorType', val as any);
+                            // WEAPON AUTO-CALC LOGIC: Default Hit = Mod + PB
+                            if (['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].includes(val)) {
+                              const statKey = val.toLowerCase() as any;
+                              const mod = calculateModifier(stats[statKey as keyof typeof stats]);
+                              const totalHit = mod + pb;
+                              updateEquipmentItem(item.id, 'ac', totalHit);
+                              setModifier(totalHit); // Sync with Dice Tab
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[85px] h-8 text-[9px] font-black uppercase bg-background border">
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="None">None</SelectItem>
+                            <SelectItem value="Light">Light</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Heavy">Heavy</SelectItem>
+                            <SelectItem value="Shield">Shield</SelectItem>
+                            <SelectItem value="STR">STR</SelectItem>
+                            <SelectItem value="DEX">DEX</SelectItem>
+                            <SelectItem value="CON">CON</SelectItem>
+                            <SelectItem value="INT">INT</SelectItem>
+                            <SelectItem value="WIS">WIS</SelectItem>
+                            <SelectItem value="CHA">CHA</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center bg-background rounded border h-8 w-11 overflow-hidden">
+                          <Input 
+                            type="number"
+                            value={item.ac ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateEquipmentItem(item.id, 'ac', val);
+                              if (isWeapon) setModifier(parseInt(val) || 0); // Sync with Dice Tab if weapon
+                            }}
+                            className="w-full h-full border-0 bg-transparent text-center text-xs font-mono px-1 focus-visible:ring-0"
+                            placeholder={isWeapon ? "Hit" : "AC"}
+                          />
+                        </div>
+                      </div>
+                    <div className="flex items-center bg-background rounded border h-8 w-12 overflow-hidden">
                       <Input 
                         type="number"
-                        value={item.weight}
+                        value={item.weight ?? 0}
                         onChange={(e) => updateEquipmentItem(item.id, 'weight', parseFloat(e.target.value) || 0)}
                         className="w-full h-full border-0 bg-transparent text-center text-xs font-mono px-1 focus-visible:ring-0"
                         placeholder="Lbs"
@@ -168,7 +224,8 @@ export default function InventoryTab() {
                     </div>
                     <Button size="icon" variant="ghost" className="w-7 h-7 hover:text-destructive" style={{ color: THEME.colors.textMuted }} onClick={() => removeEquipmentItem(item.id)}><X className="w-4 h-4" /></Button>
                   </div>
-                ))}
+                );
+              })}
               </div>
             </ScrollArea>
             <Button onClick={addEquipmentItem} variant="outline" className="w-full mt-4 border-dashed">
@@ -228,7 +285,7 @@ export default function InventoryTab() {
         {/* TOTAL WEIGHT SUMMARY: Displays live calculation of current load vs capacity */}
         <div 
           className="bg-card border-2 rounded-xl p-4 flex flex-col gap-3 shadow-lg transition-colors"
-          style={{ borderColor: isEncumbered ? 'rgba(239, 68, 68, 0.5)' : 'rgba(199, 124, 26, 0.2)' }}
+          style={{ borderColor: isEncumbered ? 'rgba(239, 68, 68, 0.8)' : 'rgba(199, 124, 26, 0.8)' }}
         >
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
@@ -251,7 +308,7 @@ export default function InventoryTab() {
                 size="icon" 
                 onClick={() => setDoubleCarry(!doubleCarry)}
                 className="h-10 w-10 rounded-full transition-all border"
-                style={doubleCarry ? { color: THEME.colors.primary, backgroundColor: 'rgba(199, 124, 26, 0.1)', borderColor: 'rgba(199, 124, 26, 0.3)' } : { color: THEME.colors.textMuted, borderColor: 'transparent' }}
+                style={doubleCarry ? { color: THEME.colors.primary, backgroundColor: 'transparent', borderColor: 'rgba(199, 124, 26, 0.6)' } : { color: THEME.colors.textMuted, borderColor: 'transparent' }}
                 title="Double Carry Capacity (Powerful Build, Enlarge, etc.)"
               >
                 <BicepsFlexed className="w-6 h-6" />
@@ -342,7 +399,7 @@ export default function InventoryTab() {
                       ))}
                     </div>
                   </ScrollArea>
-                  <Button onClick={addBagItem} variant="outline" className="w-full mt-4 border-dashed" style={{ borderColor: 'rgba(129, 140, 248, 0.3)' }}>
+                  <Button onClick={addBagItem} variant="outline" className="w-full mt-4 border-dashed" style={{ borderColor: 'rgba(129, 140, 248, 0.8)' }}>
                     <Plus className="w-4 h-4 mr-2" /> Add to Bag
                   </Button>
                 </CardContent>

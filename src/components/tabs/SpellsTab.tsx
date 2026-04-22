@@ -22,36 +22,36 @@ import spellData from '@/lib/spells/spells_2024_enriched.json';
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
   colors: {
-    saveDc: '#c77c1aff',       // Amber Orange
-    labels: '#fafafaff',       // Muted Gray
-    attackBonus: '#72b7dfff',  // Green
-    error: '#EF4444',         // Red
-    school: '#818CF8',        // Indigo
-    damage: '#F87171',        // Light Red
-    damageType: 'rgba(252, 165, 165, 0.7)',
-    save: '#FB923C',          // Orange
-    textMain: '#FFFFFF',      // White
-    textMuted: '#A3A3A3',     // Neutral 400
-    concentration: '#FB923C', // Orange
-    ritual: '#60A5FA',        // Blue
-    components: '#FFFFFF',    // White
+    saveDc: 'var(--spell-save-dc)',
+    labels: 'var(--muted-foreground)',
+    attackBonus: 'var(--spell-attack)',
+    error: 'var(--destructive)',
+    school: 'var(--spell-school)',
+    damage: 'var(--spell-damage)',
+    damageType: 'color-mix(in srgb, var(--spell-damage), transparent 30%)',
+    save: 'var(--spell-save)',
+    textMain: 'var(--foreground)',
+    textMuted: 'var(--muted-foreground)',
+    concentration: 'var(--spell-concentration)',
+    ritual: 'var(--spell-ritual)',
+    components: 'var(--foreground)',
 
     // Backgrounds & Borders
-    mechanicsBg: '#0A0A0A',   // Neutral 950
-    mechanicsBorder: '#262626', // Neutral 800
-    tagBg: '#171717',         // Neutral 900
-    tagBorder: '#262626',
-    componentBg: 'rgba(23, 23, 23, 0.5)',
-    upcastBg: 'rgba(30, 27, 75, 0.3)', // Indigo-950
-    upcastBorder: 'rgba(49, 46, 129, 0.5)',
-    upcastText: '#C7D2FE',
+    mechanicsBg: 'var(--spell-mechanics-bg)',
+    mechanicsBorder: 'var(--spell-mechanics-border)',
+    tagBg: 'var(--spell-mechanics-bg)',
+    tagBorder: 'var(--spell-mechanics-border)',
+    componentBg: 'color-mix(in srgb, var(--spell-mechanics-bg), transparent 50%)',
+    upcastBg: 'var(--spell-upcast-bg)',
+    upcastBorder: 'var(--spell-mechanics-border)',
+    upcastText: 'var(--spell-upcast-text)',
   }
 };
 
 export default function SpellsTab() {
   const {
     stats, pb, spellAbility, setSpellAbility, spellSlots, updateSpellSlotMax, toggleSpellSlot, longRest,
-    spells, addSpell, removeSpell
+    spells, addSpell, removeSpell, charInfo, triggerRoll, setActiveTab
   } = useCharacter();
 
   const [newSpellName, setNewSpellName] = useState('');
@@ -73,8 +73,36 @@ export default function SpellsTab() {
     setNewSpellName('');
   };
 
-  const spellSaveDC = 8 + pb + calculateModifier(stats[spellAbility]);
-  const spellAttackMod = pb + calculateModifier(stats[spellAbility]);
+  const totalLevel = (parseInt(charInfo.level?.toString() || '1') || 0) + (parseInt(charInfo.level2?.toString() || '0') || 0);
+  const mathPb = 1 + Math.ceil(totalLevel / 4);
+  const activePb = pb || mathPb;
+
+  const spellSaveDC = 8 + activePb + calculateModifier(stats[spellAbility]);
+  const spellAttackMod = activePb + calculateModifier(stats[spellAbility]);
+
+  const parseDiceString = (diceStr: string): Partial<DiceCounts> => {
+    const counts: Partial<DiceCounts> = {};
+    const diceMatch = diceStr.match(/(\d+)d(\d+)/g);
+    if (diceMatch) {
+      diceMatch.forEach(match => {
+        const [count, sides] = match.split('d');
+        const dieKey = `d${sides}` as keyof DiceCounts;
+        counts[dieKey] = (counts[dieKey] || 0) + parseInt(count);
+      });
+    }
+    return counts;
+  };
+
+  const handleRollSpell = (spell: any, type: 'attack' | 'damage' | 'save') => {
+    if (type === 'attack') {
+      triggerRoll({ d20: 1 }, spellAttackMod, 0, `${spell.name} (Attack)`, 'attack');
+    } else if (type === 'save') {
+      triggerRoll({ d20: 1 }, 0, 0, `${spell.name} (${spell.saveRequired} Save)`, 'save');
+    } else if (type === 'damage' && spell.damageRoll) {
+      const counts = parseDiceString(spell.damageRoll);
+      triggerRoll(counts, 0, 0, `${spell.name} (Damage)`);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
@@ -101,19 +129,24 @@ export default function SpellsTab() {
               </Select>
             </div>
 
-            <div className="flex flex-col items-center px-4 border-l">
+            <div 
+              className="flex flex-col items-center px-4 border-l cursor-pointer hover:bg-primary/5 transition-colors rounded"
+              onClick={() => triggerRoll({ d20: 1 }, 0, 0, "Spell Save DC")}
+              title="Click to roll against this DC"
+            >
               <span className="text-xs font-bold uppercase" style={{ color: THEME.colors.labels }}>Save DC</span>
               <span className="text-3xl font-black font-headline" style={{ color: THEME.colors.saveDc }}>{spellSaveDC}</span>
             </div>
 
-            <div className="flex flex-col items-center px-4 border-l">
+            <div 
+              className="flex flex-col items-center px-4 border-l cursor-pointer hover:bg-primary/5 transition-colors rounded"
+              onClick={() => triggerRoll({ d20: 1 }, spellAttackMod, 0, "Spell Attack")}
+              title="Click to roll attack"
+            >
               <span className="text-xs font-bold uppercase" style={{ color: THEME.colors.labels }}>Attack</span>
               <span className="text-3xl font-black font-headline" style={{ color: THEME.colors.attackBonus }}>+{spellAttackMod}</span>
             </div>
           </div>
-          <Button onClick={longRest} className="w-full sm:w-auto">
-            <RotateCcw className="w-4 h-4 mr-2" /> Long Rest
-          </Button>
         </CardContent>
       </Card>
 
@@ -128,7 +161,7 @@ export default function SpellsTab() {
             <div className="space-y-3">
               {Object.entries(spellSlots).map(([level, slots]) => (
                 <div key={level} className="flex items-center gap-4 bg-background/50 p-2 rounded-lg border">
-                  <span className="text-sm font-bold text-muted-foreground w-12">Lvl {level}</span>
+                  <span className="text-sm font-bold text-muted-foreground/80 w-12">Lvl {level}</span>
                   <Input
                     type="number" min="0" max="9" value={slots.max}
                     onChange={(e) => updateSpellSlotMax(level, parseInt(e.target.value))}
@@ -195,7 +228,7 @@ export default function SpellsTab() {
 
             <ScrollArea className="flex-1 h-[350px] pr-1">
               {spells.length === 0 ? (
-                <div className="text-center text-muted-foreground py-10 italic">No spells added yet.</div>
+                <div className="text-center text-muted-foreground/80 py-10 italic">No spells added yet.</div>
               ) : (
                 <div className="space-y-4">
                   {Object.entries(spells.reduce((acc, spell) => {
@@ -233,11 +266,11 @@ export default function SpellsTab() {
                                     onClick={(e) => { e.stopPropagation(); removeSpell(spell.id); }}
                                     size="icon"
                                     variant="ghost"
-                                    className="w-7 h-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                                    className="w-7 h-7 text-muted-foreground/80 hover:text-destructive group-hover:opacity-100"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
-                                  <span className="text-muted-foreground text-xs w-4 text-center">
+                                  <span className="text-muted-foreground/80 text-xs w-4 text-center">
                                     {isExpanded ? '▼' : '▶'}
                                   </span>
                                 </div>
@@ -269,7 +302,11 @@ export default function SpellsTab() {
                                       style={{ backgroundColor: THEME.colors.mechanicsBg, borderColor: THEME.colors.mechanicsBorder }}
                                     >
                                       {fullSpellDetails.damageRoll && (
-                                        <div className="flex flex-col">
+                                        <div 
+                                          className="flex flex-col cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                                          onClick={() => handleRollSpell(fullSpellDetails, 'damage')}
+                                          title="Click to roll damage"
+                                        >
                                           <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: THEME.colors.labels }}>Damage</span>
                                           <span className="font-black text-xl flex items-baseline gap-1" style={{ color: THEME.colors.damage }}>
                                             {fullSpellDetails.damageRoll}
@@ -288,7 +325,11 @@ export default function SpellsTab() {
                                       )}
 
                                       {fullSpellDetails.saveRequired && (
-                                        <div className="flex flex-col">
+                                        <div 
+                                          className="flex flex-col cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                                          onClick={() => handleRollSpell(fullSpellDetails, 'save')}
+                                          title="Click to roll for target save"
+                                        >
                                           <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: THEME.colors.labels }}>Save Required</span>
                                           <span className="font-black text-xl uppercase" style={{ color: THEME.colors.save }}>
                                             {fullSpellDetails.saveRequired}
@@ -368,7 +409,7 @@ export default function SpellsTab() {
 
                               {/* Fallback for custom spells not found in JSON */}
                               {isExpanded && !fullSpellDetails && (
-                                <div className="p-3 border-t border-border/50 bg-background/50 text-sm text-muted-foreground italic">
+                                <div className="p-3 border-t border-border/50 bg-background/50 text-sm text-muted-foreground/80 italic">
                                   Custom spell. No details found in the database.
                                 </div>
                               )}

@@ -8,6 +8,8 @@ import type { RollResult as RollResultType, RollBreakdown } from '@/lib/types';
 type RollResultProps = {
   result: RollResultType;
   specialEffect: 'crit' | 'fail' | null;
+  activeTab?: string;
+  onClose?: () => void;
 };
 
 const getCalculationData = (breakdown: RollBreakdown) => {
@@ -24,10 +26,10 @@ const getCalculationData = (breakdown: RollBreakdown) => {
   return { naturalD20, otherDiceElements };
 };
 
-export default function RollResult({ result, specialEffect }: RollResultProps) {
+export default function RollResult({ result, specialEffect, activeTab, onClose }: RollResultProps) {
   const isD20Roll = result.hasD20;
   const calcData = getCalculationData(result.breakdown);
-  const isSkillCheck = !!result.label && result.label.endsWith(' Check');
+  const isSkillCheck = !!result.label && (result.label.endsWith(' Check') || result.label.endsWith(' Saving Throw'));
   const isMultiAttack = result.attacks && result.attacks.length > 1;
   const hasCrit = result.breakdown.d20?.some(r => r.value === 20 && r.dropped === undefined);
   const isFumble = !isMultiAttack && result.breakdown.d20?.some(r => r.value === 1 && r.dropped === undefined);
@@ -52,6 +54,16 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
               {result.label}
            </div>
         )}
+
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Close result"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        )}
         
         {isMultiAttack ? (
           <div className="space-y-4">
@@ -66,24 +78,28 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                   <div className="flex justify-around items-center pt-2">
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] text-muted-foreground font-bold uppercase mb-1">To Hit</span>
-                      <div className={cn("text-3xl font-black font-headline", atk.isCrit ? 'text-yellow-400' : atk.isFumble ? 'text-red-500' : 'text-foreground')}>
+                      <div className={cn("text-[32px] font-black font-headline", atk.isCrit ? 'text-yellow-400' : atk.isFumble ? 'text-red-500' : 'text-foreground')}>
                         {atk.hit}
                       </div>
                     </div>
                     <div className="w-px h-10 bg-border"></div>
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Damage</span>
-                      <div className={cn("text-3xl font-black font-headline", atk.isFumble ? 'text-muted-foreground line-through' : 'text-red-400')}>
+                      <div className={cn("text-[32px] font-black font-headline", atk.isFumble ? 'text-muted-foreground line-through' : 'text-red-400')}>
                         {atk.damage}
                       </div>
                     </div>
                   </div>
-                  {/* FONT SIZE: Adjust text-[12px] below to change breakdown size for multi-attacks */}
-                  <div className="text-[12px] font-code text-muted-foreground truncate px-2 text-center mt-1" title={atk.detailsStr}>
-                    {atk.detailsStr}
+                  <div className="flex flex-col gap-0.5 mt-2 px-2 overflow-hidden">
+                    <div className="text-[10px] font-code text-foreground/80 truncate text-left border-l-2 border-primary/20 pl-1.5" title={atk.hitDetails}>
+                      Hit: {atk.hitDetails}
+                    </div>
+                    <div className="text-[10px] font-code text-foreground/80 truncate text-left border-l-2 border-red-500/20 pl-1.5" title={atk.dmgDetails}>
+                      Dmg: {atk.dmgDetails}
+                    </div>
                   </div>
-                  {atk.isCrit && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center animate-pulse">Critical!</div>}
-                  {atk.isFumble && <div className="text-[10px] text-destructive font-black uppercase tracking-widest text-center">Miss</div>}
+                  {atk.isCrit && activeTab === 'dice' && <div className="text-[10px] text-yellow-500 font-black uppercase tracking-widest text-center animate-pulse">Critical!</div>}
+                  {atk.isFumble && activeTab === 'dice' && <div className="text-[10px] text-destructive font-black uppercase tracking-widest text-center">Miss</div>}
                 </div>
               ))}
             </div>
@@ -95,13 +111,13 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
         ) : isD20Roll ? (
            <div className="flex flex-col items-center">
              <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">Total Result</h3>
-             <div className={cn(
+              <div className={cn(
                 "text-7xl md:text-8xl font-black drop-shadow-lg tracking-tighter mb-4 font-headline",
-                hasCrit ? 'text-yellow-400 animate-pulse' :
-                isFumble ? 'text-red-500' : 'text-foreground'
-             )}>
-                {result.totalHit}
-             </div>
+                (hasCrit && activeTab === 'dice') ? 'text-yellow-400 animate-pulse' :
+                (isFumble && activeTab === 'dice') ? 'text-red-500' : 'text-foreground'
+              )}>
+                {isSkillCheck ? result.total : result.totalHit}
+              </div>
              <div className="flex flex-col items-center gap-3 mb-4">
                <div className="flex items-center justify-center flex-wrap gap-4">
                  {result.breakdown.d20?.map((rollObj, idx) => (
@@ -123,34 +139,36 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
                    </React.Fragment>
                  ))}
                </div>
-               <div className="text-muted-foreground font-code text-sm bg-background/50 px-3 py-1.5 rounded border border-border/50">
+               <div className="text-foreground/80 font-code text-sm bg-background/50 px-3 py-1.5 rounded border border-border/50">
                   {result.breakdown.d20?.find(r => r.dropped === undefined)?.value} (d20)
                   {result.hitMod !== 0 && (result.hitMod > 0 ? ` + ${result.hitMod} (mod)` : ` - ${Math.abs(result.hitMod)} (mod)`)}
+                  {(result.hitBonusSum || 0) > 0 && <span className="text-[10px] opacity-80 ml-1"> (+{result.hitBonusSum} bonus)</span>}
                   {isSkillCheck && calcData.otherDiceElements.map((item, idx) => (
                     <React.Fragment key={idx}> + {item.value} ({item.type})</React.Fragment>
                   ))}
-                  <span className="text-foreground font-bold"> = {result.totalHit}</span>
+                  <span className="text-foreground font-bold"> = {isSkillCheck ? result.total : result.totalHit}</span>
                </div>
-               {hasCrit && !isSkillCheck && (
-                 <div className="text-[10px] text-yellow-500 font-black uppercase tracking-[0.2em] mt-2 animate-pulse">Critical Hit! Damage Dice Doubled</div>
+               {hasCrit && !isSkillCheck && activeTab === 'dice' && (
+                 <div className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 animate-pulse" style={{ color: 'rgb(var(--color-crit))' }}>Critical Hit! Damage Dice Doubled</div>
                )}
-               {isFumble && !isSkillCheck && (
-                 <div className="text-[10px] text-destructive font-black uppercase tracking-[0.2em] mt-2">Automatic Miss - No Damage</div>
+               {isFumble && !isSkillCheck && activeTab === 'dice' && (
+                 <div className="text-[10px] font-black uppercase tracking-[0.2em] mt-2" style={{ color: 'rgb(var(--color-fail))' }}>Automatic Miss - No Damage</div>
                )}
-               {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0) && !isSkillCheck && (
+               {(calcData.otherDiceElements.length > 0 || result.dmgMod !== 0 || (result.damageBonusSum || 0) > 0) && !isSkillCheck && (
                  <div className="flex flex-col items-center justify-center gap-1 mt-3 pt-3 border-t border-border/50 w-full">
                    <div className="flex items-center gap-2">
                      <Sword className="w-4 h-4 text-red-400" />
                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Damage</span>
                    </div>
                    <div className="flex items-center gap-2">
-                     <span className={cn("text-3xl font-black font-headline", isFumble ? "text-muted-foreground line-through" : "text-foreground")}>{result.totalDamage}</span>
-                     <div className="text-xs text-muted-foreground font-code flex items-center">
+                     <span className={cn("text-[32px] font-black font-headline", isFumble ? "text-muted-foreground line-through" : "text-foreground")}>{result.totalDamage}</span>
+                     <div className="text-sm text-foreground/80 font-code flex items-center">
                        ({calcData.otherDiceElements.map((item, idx) => (
                          <span key={idx} className="flex items-center">{idx > 0 && " + "}{item.value}</span>
                        ))}
                        {result.dmgMod !== 0 && (result.dmgMod > 0 ? ` + ${result.dmgMod}` : ` - ${Math.abs(result.dmgMod)}`)})
                      </div>
+                     {(result.damageBonusSum || 0) > 0 && <span className="text-[10px] opacity-80 ml-1 font-bold"> (+{result.damageBonusSum} bonus)</span>}
                    </div>
                  </div>
                )}
@@ -159,7 +177,7 @@ export default function RollResult({ result, specialEffect }: RollResultProps) {
         ) : (
           <>
             <h3 className="text-muted-foreground uppercase tracking-widest text-xs font-semibold mb-2">{result.label ? 'Result' : 'Total'}</h3>
-            <div className={cn("text-6xl md:text-7xl font-black drop-shadow-lg tracking-tighter font-headline", specialEffect === 'crit' ? 'text-yellow-400 animate-pulse' : specialEffect === 'fail' ? 'text-red-500 animate-shake' : 'text-foreground')}>
+            <div className={cn("text-6xl md:text-7xl font-black drop-shadow-lg tracking-tighter font-headline", (specialEffect === 'crit' && activeTab === 'dice') ? 'text-yellow-400 animate-pulse' : (specialEffect === 'fail' && activeTab === 'dice') ? 'text-red-500 animate-shake' : 'text-foreground')}>
               {result.totalDamage}
             </div>
             {result.dmgMod !== 0 && (

@@ -7,11 +7,29 @@ export type CharInfo = {
   level: number | string;
   class2: string;
   level2: number | string;
+  hp: number | string;
+  maxHp: number | string;
+  tempHp: number | string;
+  ac: number | string;
+  cond1: string;
+  cond2: string;
+  cond3: string;
+  isPoisoned: boolean;
+  exhaustion: number;
+  hitDie: string;
+  hitDieCount: number;
   background: string;
   alignment: string;
   xp: number | string;
   feats: string;
+  portraitUrl?: string; 
+  speed: number | string;
+  passivePerception: number | string;
+  initiative: number | string;
+  miscVitalLabel: string;
+  miscVitalValue: string;
 };
+
 
 export type Currency = {
   cp: number;
@@ -28,11 +46,15 @@ export type Consumable = {
   weight: number;
 };
 
+export type EquipmentType = 'None' | 'Light' | 'Medium' | 'Heavy' | 'Shield' | 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA';
+
 export type EquipmentItem = {
   id: number;
   name: string;
   weight: number;
   isWearing: boolean;
+  armorType?: EquipmentType;
+  ac?: number | string;
 };
 
 // NEW: Structured type for general inventory gear
@@ -45,6 +67,12 @@ export type InventoryItem = {
 export type UntrackedItem = {
   id: number;
   name: string;
+};
+
+export type Feat = {
+  id: number;
+  name: string;
+  description: string;
 };
 
 export type Spell = {
@@ -88,6 +116,8 @@ export type AttackResult = {
   isCrit: boolean;
   isFumble: boolean;
   detailsStr: string;
+  hitDetails?: string;
+  dmgDetails?: string;
 };
 
 export type RollResult = {
@@ -100,9 +130,49 @@ export type RollResult = {
   breakdown: RollBreakdown;
   hitMod: number;
   dmgMod: number;
+  hitBonusSum?: number;
+  damageBonusSum?: number;
   timestamp: string;
   detailsStr: string;
   rollMode: RollMode;
   label: string | null;
   attacks?: AttackResult[]; // EFFECT: Individual attack breakdowns for multi-attack scenarios
 };
+export type SummonAction = {
+  id: string;
+  name: string;
+  description: string;
+  toHit?: string;
+  damage?: string;
+};
+
+export type SummonTrait = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+export type SummonStatblock = {
+  name: string;
+  type: string;
+  ac: number | string;
+  hp: number | string;
+  maxHp: number | string;
+  initiative: number | string;
+  speed: string;
+  stats: Stats;
+  saves: string;
+  skills: string;
+  senses: string;
+  languages: string;
+  resistances: string;
+  immunities: string;
+  traits: SummonTrait[];
+  actions: SummonAction[];
+  bonusActions: SummonAction[];
+  reactions: SummonAction[];
+  miscVitalLabel?: string;
+  miscVitalValue?: string;
+};
+
+export type ActiveTab = 'home' | 'dice' | 'skills' | 'inventory' | 'character' | 'spells' | 'summon';

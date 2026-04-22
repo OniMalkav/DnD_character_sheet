@@ -1,7 +1,9 @@
 "use client";
 
-import { User, Plus } from 'lucide-react';
+import { useEffect } from 'react';
+import { User, Plus, ShieldCheck } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { Checkbox } from '@/components/ui/checkbox';
 import StatBlock from '@/components/character/StatBlock';
 import SkillList from '@/components/character/SkillList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,16 +19,16 @@ import type { RollMode, RollResult, DiceCounts, SkillBonus } from '@/lib/types';
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
   colors: {
-    advantage: '#72b7dfff',    // Green (from SpellsTab attackBonus)
-    disadvantage: '#EF4444',   // Red
-    icons: '#c77c1aff',        // Amber (from SpellsTab saveDc)
-    textMuted: '#A3A3A3',      // Neutral 400
+    advantage: 'var(--color-advantage)',
+    disadvantage: 'var(--color-disadvantage)',
+    icons: 'var(--color-icons)',
+    textMuted: 'var(--muted-foreground)',
+    vitalsNumber: 'var(--vitals-number-color)',
+    vitalsLabel: 'var(--vitals-label-color)',
   }
 };
 
 type SkillsTabProps = {
-    rollMode: RollMode;
-    setRollMode: React.Dispatch<React.SetStateAction<RollMode>>;
     isRolling: boolean;
     setIsRolling: React.Dispatch<React.SetStateAction<boolean>>;
     setResult: React.Dispatch<React.SetStateAction<RollResult | null>>;
@@ -34,15 +36,23 @@ type SkillsTabProps = {
     setSpecialEffect: React.Dispatch<React.SetStateAction<'crit' | 'fail' | null>>;
     skillBonuses: SkillBonus;
     setSkillBonuses: React.Dispatch<React.SetStateAction<SkillBonus>>;
-    setCounts: React.Dispatch<React.SetStateAction<DiceCounts>>;
-    setModifier: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export default function SkillsTab({
-    rollMode, setRollMode, isRolling, setIsRolling, setResult, setHistory, 
-    setSpecialEffect, skillBonuses, setSkillBonuses, setCounts, setModifier
-}: SkillsTabProps) {
-    const { stats, profs, pb, setPb, characterName, setCharacterName } = useCharacter();
+export default function SkillsTab({ 
+    skillBonuses, setSkillBonuses 
+}: { 
+    skillBonuses: SkillBonus, 
+    setSkillBonuses: React.Dispatch<React.SetStateAction<SkillBonus>> 
+}) {
+    const { 
+      stats, profs, pb, setPb, charInfo, updateCharInfo, toggleProficiency,
+      rollMode, setRollMode, setCounts, setModifier, triggerRoll, setActiveTab,
+      hitBonuses, setHitBonuses
+    } = useCharacter();
+
+    const totalLevel = (parseInt(charInfo.level?.toString() || '1') || 0) + (parseInt(charInfo.level2?.toString() || '0') || 0);
+    const mathPb = 1 + Math.ceil(totalLevel / 4);
+    const activePb = pb || mathPb;
 
     const rollSkill = (skillName: string) => {
         const skill = SKILLS_DATA.find(s => s.name === skillName);
@@ -50,94 +60,48 @@ export default function SkillsTab({
 
         const statMod = calculateModifier(stats[skill.stat]);
         const isProficient = profs.has(skill.name);
-        const totalMod = statMod + (isProficient ? pb : 0);
+        const totalMod = statMod + (isProficient ? activePb : 0);
         
-        const checkCounts: DiceCounts = {
+        const checkCounts: Partial<DiceCounts> = {
           d4: skillBonuses.d4 ? 1 : 0,
           d6: skillBonuses.d6 ? 1 : 0,
           d8: skillBonuses.d8 ? 1 : 0,
           d10: skillBonuses.d10 ? 1 : 0,
           d12: skillBonuses.d12 ? 1 : 0,
           d20: 1,
-          d100: 0
         };
 
-        // This is a bit of a hack to show the dice on the main roller
-        setCounts(checkCounts);
-        setModifier(totalMod);
-
-        setIsRolling(true);
-        setResult(null);
-        setSpecialEffect(null);
-
-        setTimeout(() => {
-            const sides = 20;
-            const r1 = Math.floor(Math.random() * sides) + 1;
-            let d20roll;
-            let dropped;
-
-            if (rollMode !== 'normal') {
-                const r2 = Math.floor(Math.random() * sides) + 1;
-                d20roll = rollMode === 'advantage' ? Math.max(r1, r2) : Math.min(r1, r2);
-                dropped = rollMode === 'advantage' ? Math.min(r1, r2) : Math.max(r1, r2);
-            } else {
-                d20roll = r1;
-            }
-            
-            let bonusDiceSum = 0;
-            const bonusDiceRolls: { [key: string]: number[] } = {};
-            const bonusDiceDetails: string[] = [];
-
-            Object.entries(skillBonuses).forEach(([die, active]) => {
-                if (active) {
-                    const dieSides = parseInt(die.substring(1));
-                    const roll = Math.floor(Math.random() * dieSides) + 1;
-                    bonusDiceSum += roll;
-                    if (!bonusDiceRolls[die]) bonusDiceRolls[die] = [];
-                    bonusDiceRolls[die].push(roll);
-                    bonusDiceDetails.push(`${roll} (${die})`);
-                }
-            });
-
-            const hasNat20 = d20roll === 20;
-            const hasNat1 = d20roll === 1;
-
-            const breakdown = {
-                d20: [{ value: d20roll, dropped: dropped, mode: rollMode }],
-                ...Object.entries(bonusDiceRolls).reduce((acc, [die, rolls]) => {
-                    acc[die as 'd4' | 'd6' | 'd8' | 'd10' | 'd12'] = rolls.map(value => ({ value }));
-                    return acc;
-                }, {} as any)
-            };
-
-            const resultObj: RollResult = {
-                total: d20roll + totalMod + bonusDiceSum,
-                totalHit: d20roll + totalMod + bonusDiceSum,
-                totalDamage: 0,
-                hasD20: true,
-                hasDamage: false,
-                damageRaw: 0,
-                breakdown,
-                hitMod: totalMod,
-                dmgMod: 0,
-                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                detailsStr: `1d20 + ${totalMod} (Skill) ${bonusDiceDetails.length > 0 ? `+ ${bonusDiceDetails.join(' + ')}` : ''}`,
-                rollMode,
-                label: `${skill.name} Check`
-            };
-    
-            setResult(resultObj);
-            setHistory(prev => [resultObj, ...prev].slice(0, 20));
-            setIsRolling(false);
-    
-            if (hasNat20) setSpecialEffect('crit');
-            else if (hasNat1) setSpecialEffect('fail');
-        }, 600);
+        triggerRoll(checkCounts, totalMod, 0, `${skill.name} Check`, 'check');
     };
     
     const toggleSkillBonus = (die: keyof SkillBonus) => {
         setSkillBonuses(prev => ({ ...prev, [die]: !prev[die] }));
     };
+
+    const rollSave = (statName: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha') => {
+        const statValue = stats[statName];
+        const statMod = calculateModifier(statValue);
+        const isProficient = profs.has(`SAVE_${statName.toUpperCase()}`);
+        const totalMod = statMod + (isProficient ? activePb : 0);
+        
+        const checkCounts: Partial<DiceCounts> = {
+          d4: skillBonuses.d4 ? 1 : 0,
+          d6: skillBonuses.d6 ? 1 : 0,
+          d8: skillBonuses.d8 ? 1 : 0,
+          d10: skillBonuses.d10 ? 1 : 0,
+          d12: skillBonuses.d12 ? 1 : 0,
+          d20: 1,
+        };
+
+        triggerRoll(checkCounts, totalMod, 0, `${statName.toUpperCase()} Saving Throw`, 'save');
+    };
+
+    const mathPassivePerception = 10 + calculateModifier(stats.wis) + (profs.has('Perception') ? activePb : 0);
+    const mathInitiative = calculateModifier(stats.dex);
+    const mathSpeed = 30;
+
+    // Use active values
+    const displayInitiative = mathInitiative >= 0 ? `+${mathInitiative}` : `${mathInitiative}`;
 
     return (
         <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
@@ -146,15 +110,21 @@ export default function SkillsTab({
                     <Button onClick={() => setRollMode('normal')} variant={rollMode === 'normal' ? 'secondary' : 'ghost'} className="flex-1 uppercase font-bold">Normal</Button>
                     <Button 
                         onClick={() => setRollMode('advantage')} 
-                        variant={rollMode === 'advantage' ? 'success' : 'ghost'} 
-                        className="flex-1 uppercase font-bold"
-                        style={rollMode !== 'advantage' ? { color: THEME.colors.advantage } : {}}
+                        variant="ghost" 
+                        className={cn(
+                            "flex-1 uppercase font-bold border transition-all",
+                            rollMode === 'advantage' ? "border-[var(--color-advantage)] bg-[var(--color-advantage)]/10" : "border-transparent"
+                        )}
+                        style={{ color: THEME.colors.advantage }}
                     >Advantage</Button>
                     <Button 
                         onClick={() => setRollMode('disadvantage')} 
-                        variant={rollMode === 'disadvantage' ? 'destructive' : 'ghost'} 
-                        className="flex-1 uppercase font-bold"
-                        style={rollMode !== 'disadvantage' ? { color: THEME.colors.disadvantage } : {}}
+                        variant="ghost" 
+                        className={cn(
+                            "flex-1 uppercase font-bold border transition-all",
+                            rollMode === 'disadvantage' ? "border-[var(--color-disadvantage)] bg-[var(--color-disadvantage)]/10" : "border-transparent"
+                        )}
+                        style={{ color: THEME.colors.disadvantage }}
                     >Disadvantage</Button>
                 </CardContent>
             </Card>
@@ -166,17 +136,75 @@ export default function SkillsTab({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="char-name">Character Name</Label>
-                            <Input id="char-name" type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)} placeholder="e.g. Grog" className="font-bold tracking-wide" />
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="passive-perception" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Passive Perc.</Label>
+                            </div>
+                            <Input
+                                id="passive-perception"
+                                value={charInfo.passivePerception || ''}
+                                onChange={(e) => updateCharInfo('passivePerception', e.target.value)}
+                                placeholder={mathPassivePerception.toString()}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
                         </div>
-                        <div>
-                            <Label htmlFor="prof-bonus">Proficiency Bonus</Label>
-                            <Input id="prof-bonus" type="number" value={pb} onChange={(e) => setPb(parseInt(e.target.value) || 0)} className="font-code text-center w-24" />
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="prof-bonus" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Prof. Bonus</Label>
+                            </div>
+                            <Input
+                                id="prof-bonus"
+                                type="text"
+                                value={pb || ''}
+                                onChange={(e) => setPb(parseInt(e.target.value) || 0)}
+                                placeholder={`+${mathPb}`}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="initiative" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Initiative</Label>
+                            </div>
+                            <Input
+                                id="initiative"
+                                value={charInfo.initiative || ''}
+                                onChange={(e) => updateCharInfo('initiative', e.target.value)}
+                                placeholder={displayInitiative}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="speed" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Speed</Label>
+                            </div>
+                            <Input
+                                id="speed"
+                                value={charInfo.speed || ''}
+                                onChange={(e) => updateCharInfo('speed', e.target.value)}
+                                placeholder={mathSpeed.toString()}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Input 
+                                    value={charInfo.miscVitalLabel || 'Custom'} 
+                                    onChange={(e) => updateCharInfo('miscVitalLabel', e.target.value)}
+                                    className="w-full bg-transparent border-0 p-0 uppercase text-center focus-visible:ring-0 font-semibold tracking-wide h-full leading-none"
+                                    style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}
+                                />
+                            </div>
+                            <Input
+                                id="misc-vital"
+                                value={charInfo.miscVitalValue || ''}
+                                onChange={(e) => updateCharInfo('miscVitalValue', e.target.value)}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
                         </div>
                     </div>
-                    <StatBlock stats={stats} />
+                    <StatBlock stats={stats} onRollSave={rollSave} />
                 </CardContent>
             </Card>
 
@@ -192,8 +220,11 @@ export default function SkillsTab({
                             <Button
                                 key={die}
                                 onClick={() => toggleSkillBonus(die)}
-                                variant={skillBonuses[die] ? 'default' : 'secondary'}
-                                className={cn("flex-1 min-w-[50px] font-code", skillBonuses[die] && 'shadow-lg')}
+                                variant="ghost"
+                                className={cn(
+                                    "flex-1 min-w-[50px] font-code border transition-all",
+                                    skillBonuses[die] ? "border-primary text-primary shadow-[0_0_10px_rgba(255,255,255,0.1)]" : "border-white/10 text-muted-foreground"
+                                )}
                             >
                                 +{die}
                             </Button>
@@ -203,7 +234,7 @@ export default function SkillsTab({
                 </CardContent>
             </Card>
 
-            <SkillList isRolling={isRolling} onRoll={rollSkill} />
+            <SkillList onRoll={rollSkill} />
         </div>
     );
 }

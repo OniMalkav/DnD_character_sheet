@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: 'A D&D 5e companion app for dice rolling, character and inventory management.',
 };
 
+import { CharacterProvider } from '@/contexts/CharacterContext';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,8 +22,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased selection:bg-primary selection:text-primary-foreground">
-        {children}
-        <Toaster />
+        <CharacterProvider>
+          {children}
+          <Toaster />
+        </CharacterProvider>
       </body>
     </html>
   );

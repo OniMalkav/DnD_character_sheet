@@ -1,0 +1,359 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Main Background Colors --- */
+    /* This sets the primary background of the application. Currently a dark, rich brown. */
+    --background: #1c1613;
+    /* The primary text color. Set to pure white for high contrast on the dark background. */
+    --foreground: #ffffff;
+
+    /* --- UI Card Styling --- */
+    /* Background for standard UI cards. Matches the main background. */
+    --card: #1c1613;
+    /* Text color for content within cards. */
+    --card-foreground: #bbb6b6;
+
+    /* --- Popover & Dropdown Menus --- */
+    /* Background for smaller floating menus or tooltips. */
+    --popover: #261d18;
+    /* Text color for floating menu items. */
+    --popover-foreground: #fafafa;
+
+    /* --- Primary Theme Color --- */
+    /* This is your 'Accent' color used for primary buttons, highlights, etc. */
+    --primary: #ffffff;
+    /* Text color used on top of the primary color. */
+    --primary-foreground: #ffffff;
+
+    /* --- Secondary UI Elements --- */
+    /* Used for less important buttons or backgrounds. */
+    --secondary: #4a3f36;
+    --secondary-foreground: #fafafa;
+
+    /* --- Muted / Disabled Colors --- */
+    /* Used for text or backgrounds that should not stand out. */
+    --muted: #4a3f36;
+    --muted-foreground: #d1cecc;
+
+    /* --- Highlight Accent Color --- */
+    /* A bright highlight color, currently pure white. */
+    --accent: #000000;
+    /* Text color used when the accent color is the background. */
+    --accent-foreground: #ffffff;
+
+    /* --- Status Colors --- */
+    /* Red color used for errors, 'Disadvantage', or destructive actions. */
+    --destructive: #f54e4e;
+    --destructive-foreground: #fafafa;
+
+    /* Green color used for successes or 'Advantage'. */
+    --success: #16a34a;
+    --success-foreground: #fafafa;
+
+    /* --- Border & Input Styling --- */
+    /* Color for lines separating content. */
+    --border: #4a3f36;
+    /* Background color for form input fields. */
+    --input: #3a3028;
+    /* The color of the glow when an input is selected. */
+    --ring: #f48c25;
+
+    /* --- Text Selection Color --- */
+    /* Forces a highly readable highlight style instead of the default white overlay */
+    *::selection {
+      background-color: var(--ring) !important;
+      color: #000000 !important;
+    }
+
+    input::selection,
+    textarea::selection {
+      background-color: var(--ring) !important;
+      color: #000000 !important;
+    }
+
+    /* --- Charting Colors --- */
+    /* --- Placeholder, if needed --- */
+    --chart-1: #f27e55;
+    --chart-2: #2a9d89;
+    --chart-3: #264d62;
+    --chart-4: #f5cb5a;
+    --chart-5: #f9a15d;
+
+    /* --- Corner Rounding --- */
+    --radius: 0.5rem;
+
+    /* ==========================================================================
+       TAB-BY-TAB THEME SETTINGS
+       ========================================================================== */
+
+    /* --- [GLOBAL] --- */
+    --font-size-label: 10px;
+    /* Standard size for uppercase headers across all tabs */
+    --font-size-content: 14px;
+    /* General body text size across all tabs */
+    --font-weight-headline: 900;
+    /* Boldness of numbers and titles */
+    --color-icons: #c77c1a;
+    /* Global icon color (Amber) */
+    --cloud-sync: #f1f1f1;
+    /* Cloud storage sync buttons */
+    --color-advantage: #19fc24;
+    /* Highlight color for 'Advantage' mode */
+    --color-disadvantage: #ef4444;
+    /* Highlight color for 'Disadvantage' mode */
+
+    /* --- [HOME] --- */
+    --home-text-primary: #ffffff;
+    /* Color of the Hero's Name */
+    --home-text-secondary: #ffffffcc;
+    /* Color of secondary elements like Encumbrance text */
+    --home-text-tertiary: #ffffff99;
+    /* Color of labels like 'Hit Dice' */
+    --home-btn-hover: #6366f11a;
+    /* Hover background for Cloud Save button */
+
+    /* --- [DICE] --- */
+    --color-crit: #fac215;
+    /* Gold glow for Natural 20s */
+    --color-fail: #dc2626;
+    /* Red glow for Critical Misses */
+    --dice-weapon-bg: #0a0a0a;
+    /* Background of weapon blocks */
+    --dice-weapon-border: #c77c1a;
+    /* Border of weapon blocks */
+    --dice-weapon-btn: #0f0f0f;
+    /* Quick roll button background */
+    --dice-support-header: #e6f0ae1a;
+    /* Support dice header background */
+    --dice-support-border: #c77c1a;
+    /* Support dice border */
+
+    /* --- [DICE FONT SIZES] --- */
+    --dice-font-weapon-title: 12px;
+    /* Equipt weapons */
+    --dice-font-weapon-mod: 10px;
+    /* Equipt weapons */
+    --dice-font-support-title: 10px;
+    /* Support Dice title */
+    --dice-font-support-subtitle: 10px;
+    /* Support Dice sub-title */
+    --dice-font-support-btn: 14px;
+    /* Support Dice Button Font Size */
+    --dice-font-roll-btn: 24px;
+    /* Roll */
+
+    --dice-font-grid-label: 18px;
+    /* Dice identifier d4 etc */
+    --dice-font-grid-pm-btn: 20px;
+    /* Dice count +/- */
+    --dice-font-grid-count: 24px;
+    /* Dice count font */
+
+    --dice-font-controls-label: 14px;
+    /* TO HIT and DMG */
+
+    --dice-font-result-label: 12px;
+    /* Total result tittle */
+    --dice-font-result-small: 10px;
+    /* ???? */
+    --dice-font-result-damage: 32px;
+    --dice-font-result-total: 72px;
+    --dice-font-result-total-md: 96px;
+    --dice-font-result-d20: 36px;
+    --dice-font-result-d20-md: 48px;
+    --dice-font-result-bottom-label: 22px;
+    /* Bottom Dice identifier */
+    --dice-font-result-bottom-value: 18px;
+    /* Bottom Dice value */
+
+    /* --- [DICE GRID COLORS] --- */
+    --dice-d4: #dc2626;
+    --dice-d6: #2563eb;
+    --dice-d8: #16a34a;
+    --dice-d10: #9333ea;
+    --dice-d12: #ea580c;
+    --dice-d20: #ca8a04;
+    --dice-d100: #334155;
+    --dice-grid-text-muted: #a3a3a3;
+
+    /* --- [ROLL CONTROLS COLORS] --- */
+    --dice-controls-label: #a3a3a3;
+    --dice-controls-icon: #f87171;
+
+    /* --- [INV] --- */
+    --inv-consumables: #f48c25;
+    /* Consumables section icons */
+    --inv-equipment: #60a5fa;
+    /* Main equipment section icons */
+    --inv-inventory: #a8a29e;
+    /* General inventory icons */
+    --inv-wallet: #eab308;
+    /* Gold/Currency section icons */
+    --inv-bag: #818cf8;
+    /* Bag of Holding / Containers */
+    --inv-untracked: #34d399;
+    /* Miscellaneous items */
+    --cp: #c2410c;
+    /* Copper Pieces */
+    --sp: #94a3b8;
+    /* Silver Pieces */
+    --ep: #93c5fd;
+    /* Electrum Pieces */
+    --gp: #eab308;
+    /* Gold Pieces */
+    --pp: #e2e8f0;
+    /* Platinum Pieces */
+
+    /* --- [CHAR] --- */
+    --char-label: var(--muted-foreground);
+    /* Small uppercase labels (e.g., 'Character Name') */
+    --char-text: var(--foreground);
+    /* Standard text color for character inputs */
+    --char-border: rgba(255, 255, 255, 0.1);
+    /* Faint borders for character sections */
+
+    /* --- [SKILLS] --- */
+    --vitals-number-color: #ffffff;
+    /* Main color for Passive Perc, Initiative, etc. */
+    --vitals-placeholder-opacity: 1;
+    /* Visibility of default values (0 to 1) */
+    --vitals-label-color: #00ecfd;
+    /* Tiny labels above inputs (e.g. 'Speed') */
+    --mod-positive: #19fc24;
+    /* Positive skill modifiers (+3, etc.) */
+    --mod-negative: #ef4444;
+    /* Negative skill modifiers (-1, etc.) */
+    --vitals-font-size: 18px;
+    /* Size of the numbers in the vitals row */
+
+    /* --- [SPELLS] --- */
+    --spell-save-dc: #c77c1a;
+    /* Color of the Spell Save DC number */
+    --spell-attack: #72b7df;
+    /* Color of the Spell Attack modifier */
+    --spell-school: #818cf8;
+    /* Tags for schools of magic (Evocation, etc.) */
+    --spell-damage: #f87171;
+    /* Highlight for damage/die numbers */
+    --spell-save: #fb923c;
+    /* Required saving throw text */
+    --spell-concentration: #fb923c;
+    /* Concentration duration tag */
+    --spell-ritual: #60a5fa;
+    /* Ritual casting tag */
+    --spell-mechanics-bg: #0a0a0a;
+    /* Background of the spell info box */
+    --spell-mechanics-border: #262626;
+    /* Border of the spell info box */
+    --spell-upcast-bg: #1e1b4b;
+    /* Background for higher-level casting info */
+    --spell-upcast-text: #c7d2fe;
+    /* Text color for higher-level casting info */
+    --spell-add-btn-bg: #000000;
+    /* Background color of the '+' button to add spells */
+    --spell-add-btn-text: #ffffff;
+    /* Text/Icon color of the '+' button to add spells */
+
+    /* --- [SUMMON] --- */
+    --summon-bg: #2e2621;
+    /* Background of the monster statblock */
+    --summon-accent: #c77c1a;
+    /* Main accent/border color for summon */
+    --summon-header-bg: #4a3f36;
+    /* Background of the summon header */
+    --summon-stat-label: #00ecfd;
+    /* Stat label color (STR, DEX, etc.) */
+    --summon-stat-value: #ffffff;
+    /* Main Stat value number color */
+    --summon-stat-mod: #ffffff99;
+    /* Small modifier number beneath the stats like (+2) */
+    --summon-section-title: #f48c25;
+    /* Headings like 'Actions', 'Traits' */
+    --summon-btn-bg: #3a3028;
+    /* Background for add/remove buttons */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* --- [SKILLS TAB STYLES] --- */
+  .vitals-input {
+    font-size: var(--vitals-font-size);
+    font-weight: var(--font-weight-headline);
+    color: var(--vitals-number-color);
+  }
+
+  .vitals-input::placeholder {
+    color: color-mix(in srgb, var(--vitals-number-color), transparent calc(100% - (var(--vitals-placeholder-opacity) * 100%)));
+    opacity: 1;
+  }
+
+  /* --- [SPELLS TAB STYLES] --- */
+  .spell-slot-button {
+    @apply w-6 h-6 rounded-full border-2 transition-all;
+  }
+
+  .spell-slot-button--available {
+    background-color: transparent;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--primary), transparent 50%);
+  }
+
+  .spell-slot-button--available:hover {
+    background-color: color-mix(in srgb, var(--primary), transparent 80%);
+  }
+
+  .spell-slot-button--used {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.2);
+    @apply border-border;
+    position: relative;
+  }
+
+  .spell-slot-button--used::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+  }
+
+  .spell-slot-button--used:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  /* --- [INVENTORY TAB STYLES] --- */
+  .inventory-item-row {
+    @apply flex items-center gap-2 bg-background/50 p-2 rounded-lg border transition-all hover:border-primary/30;
+  }
+
+  .inventory-item-input {
+    @apply flex-1 bg-transparent border-0 h-8 focus-visible:ring-0 text-sm font-medium;
+  }
+
+  .inventory-scroll-area-sm {
+    @apply h-40 pr-3;
+  }
+}

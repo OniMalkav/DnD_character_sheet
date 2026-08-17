@@ -1,0 +1,30 @@
+export const DICE_TYPES = [
+  { type: 'd4' as const, sides: 4, color: 'bg-red-600', hover: 'hover:bg-red-700' },
+  { type: 'd6' as const, sides: 6, color: 'bg-blue-600', hover: 'hover:bg-blue-700' },
+  { type: 'd8' as const, sides: 8, color: 'bg-green-600', hover: 'hover:bg-green-700' },
+  { type: 'd10' as const, sides: 10, color: 'bg-purple-600', hover: 'hover:bg-purple-700' },
+  { type: 'd12' as const, sides: 12, color: 'bg-orange-600', hover: 'hover:bg-orange-700' },
+  { type: 'd20' as const, sides: 20, color: 'bg-yellow-600', hover: 'hover:bg-yellow-700' },
+  { type: 'd100' as const, sides: 100, color: 'bg-slate-700', hover: 'hover:bg-slate-800' },
+];
+
+export const SKILLS_DATA = [
+  { name: 'Acrobatics', stat: 'dex' as const },
+  { name: 'Animal Handling', stat: 'wis' as const },
+  { name: 'Arcana', stat: 'int' as const },
+  { name: 'Athletics', stat: 'str' as const },
+  { name: 'Deception', stat: 'cha' as const },
+  { name: 'History', stat: 'int' as const },
+  { name: 'Insight', stat: 'wis' as const },
+  { name: 'Intimidation', stat: 'cha' as const },
+  { name: 'Investigation', stat: 'int' as const },
+  { name: 'Medicine', stat: 'wis' as const },
+  { name: 'Nature', stat: 'int' as const },
+  { name: 'Perception', stat: 'wis' as const },
+  { name: 'Performance', stat: 'cha' as const },
+  { name: 'Persuasion', stat: 'cha' as const },
+  { name: 'Religion', stat: 'int' as const },
+  { name: 'Sleight of Hand', stat: 'dex' as const },
+  { name: 'Stealth', stat: 'dex' as const },
+  { name: 'Survival', stat: 'wis' as const },
+];

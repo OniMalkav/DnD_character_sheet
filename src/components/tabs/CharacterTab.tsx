@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { User, Download, Upload, PenLine, ScrollText, CloudUpload, CloudDownload, LogIn, LogOut, Skull, Zap, Plus, Trash2, ChevronDown, ChevronUp, Flame } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from '@/lib/utils';
 
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
@@ -17,10 +19,10 @@ const THEME = {
     cloud: 'var(--cloud-sync)',
     labels: 'var(--muted-foreground)',
     textMuted: 'var(--muted-foreground)',
+    deathSuccess: 'var(--death-save-success, #19fc24)',
+    deathFailure: 'var(--death-save-failure, #ef4444)',
   }
 };
-
-import { useState } from 'react';
 
 export default function CharacterTab() {
   const [expandedFeatIndex, setExpandedFeatIndex] = useState<number | null>(null);
@@ -34,6 +36,32 @@ export default function CharacterTab() {
     featsList, addFeat, updateFeat, removeFeat, moveFeat,
     counters, addCounter, updateCounter, removeCounter
   } = useCharacter();
+
+  const currentHp = parseInt(charInfo.hp?.toString() || '0') || 0;
+
+  // Death Saves state (3 successes, 3 failures)
+  const [deathSaves, setDeathSaves] = useState<{ successes: boolean[]; failures: boolean[] }>({
+    successes: [false, false, false],
+    failures: [false, false, false],
+  });
+
+  // Automatically reset Death Saves if HP increases above 0
+  useEffect(() => {
+    if (currentHp > 0) {
+      setDeathSaves({
+        successes: [false, false, false],
+        failures: [false, false, false],
+      });
+    }
+  }, [currentHp]);
+
+  const toggleDeathSave = (type: 'successes' | 'failures', index: number) => {
+    setDeathSaves(prev => {
+      const nextList = [...prev[type]];
+      nextList[index] = !nextList[index];
+      return { ...prev, [type]: nextList };
+    });
+  };
 
   return (
     <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 space-y-6">
@@ -97,7 +125,7 @@ export default function CharacterTab() {
               <div className="h-5 flex items-center justify-center">
                 <Label htmlFor="tempHp" className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: THEME.colors.labels }}>Temp</Label>
               </div>
-              <Input id="tempHp" type="number" value={charInfo.tempHp} onChange={(e) => updateCharInfo('tempHp', e.target.value)} placeholder="0" className="mt-2 font-bold tracking-tight text-foreground/90 text-center text-xl h-12 px-1 border-orange-500/20" />
+              <Input id="tempHp" type="number" value={charInfo.tempHp} onChange={(e) => updateCharInfo('tempHp', e.target.value)} placeholder="0" className="mt-2 font-bold tracking-tight text-foreground/90 text-center text-xl h-12 px-1 border-[color:var(--char-temp-hp-border)]" />
             </div>
 
             <div className="flex-[1.5] min-w-[120px]">
@@ -154,7 +182,7 @@ export default function CharacterTab() {
                 <Checkbox
                   checked={charInfo.heroicInspiration}
                   onCheckedChange={(checked) => updateCharInfo('heroicInspiration', !!checked)}
-                  className="h-6 w-6 border-2 border-yellow-500/50"
+                  className="h-6 w-6 border-2 border-[color:var(--char-inspiration-border)]"
                 />
               </div>
             </div>
@@ -185,6 +213,67 @@ export default function CharacterTab() {
             </div>
           </div>
 
+          {/* DEATH SAVES CONTAINER (Only visible when currentHp === 0) */}
+          {currentHp === 0 && (
+            <div className="bg-[color:var(--home-death-panel-bg)] border border-[color:var(--home-death-panel-border)] rounded-xl p-4 space-y-3 backdrop-blur-md shadow-lg animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center justify-between border-b border-[color:var(--home-death-panel-border)] pb-2">
+                <div className="flex items-center gap-2">
+                  <Skull className="w-4 h-4 text-red-400 animate-pulse" />
+                  <span className="text-xs font-black uppercase tracking-[0.2em] text-red-300">Death Saving Throws</span>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/50">Unconscious</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* SUCCESSES */}
+                <div className="flex items-center justify-between bg-black/40 px-3 py-2 rounded-lg border border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Successes</span>
+                  <div className="flex items-center gap-2.5">
+                    {deathSaves.successes.map((checked, idx) => (
+                      <button
+                        key={`success-${idx}`}
+                        type="button"
+                        onClick={() => toggleDeathSave('successes', idx)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer active:scale-90",
+                          checked
+                            ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] text-black"
+                            : "border-white/20 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                        )}
+                        title={`Success ${idx + 1}`}
+                      >
+                        {checked && <div className="w-2 h-2 rounded-full bg-black" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FAILURES */}
+                <div className="flex items-center justify-between bg-black/40 px-3 py-2 rounded-lg border border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-400">Failures</span>
+                  <div className="flex items-center gap-2.5">
+                    {deathSaves.failures.map((checked, idx) => (
+                      <button
+                        key={`failure-${idx}`}
+                        type="button"
+                        onClick={() => toggleDeathSave('failures', idx)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer active:scale-90",
+                          checked
+                            ? "bg-rose-500 border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.5)] text-white"
+                            : "border-white/20 bg-white/5 hover:border-rose-500/50 hover:bg-rose-500/10"
+                        )}
+                        title={`Failure ${idx + 1}`}
+                      >
+                        {checked && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TWO COLUMN SECTION: LEFT (CLASS & INFO), RIGHT (RESOURCE COUNTERS) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
@@ -208,7 +297,7 @@ export default function CharacterTab() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="race" className="text-xs font-bold uppercase tracking-widest block text-center" style={{ color: THEME.colors.labels }}>Race</Label>
+                  <Label htmlFor="race" className="text-xs font-bold uppercase tracking-widest block text-center" style={{ color: THEME.colors.labels }}>Species</Label>
                   <Input id="race" type="text" value={charInfo.race} onChange={(e) => updateCharInfo('race', e.target.value)} placeholder="e.g. Goliath" className="mt-1" />
                 </div>
                 <div>
@@ -312,10 +401,10 @@ export default function CharacterTab() {
                 const isExpanded = expandedFeatIndex === index;
 
                 const currentType = feat.type || 'Feat';
-                let typeColor = '#3b82f6'; // blue-500
-                if (currentType === 'Trait') typeColor = '#10b981'; // emerald-500
-                else if (currentType === 'Other') typeColor = '#8b5cf6'; // violet-500
-                else if (currentType === 'Invocation') typeColor = '#f97316'; // orange-500
+                let typeColor = 'var(--char-feat-feat)';
+                if (currentType === 'Trait') typeColor = 'var(--char-feat-trait)';
+                else if (currentType === 'Other') typeColor = 'var(--char-feat-other)';
+                else if (currentType === 'Invocation') typeColor = 'var(--char-feat-invocation)';
 
                 return (
                   <div key={feat.id + '-' + index} className="bg-background/40 border border-border/50 rounded-lg overflow-hidden transition-all hover:border-border group" style={{ borderLeftWidth: '4px', borderLeftColor: typeColor }}>

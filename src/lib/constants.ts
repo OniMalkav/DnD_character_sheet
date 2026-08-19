@@ -28,3 +28,17 @@ export const SKILLS_DATA = [
   { name: 'Stealth', stat: 'dex' as const },
   { name: 'Survival', stat: 'wis' as const },
 ];
+
+export const WEAPON_MASTERIES = [
+  'None',
+  'Cleave',
+  'Graze',
+  'Nick',
+  'Push',
+  'Sap',
+  'Slow',
+  'Topple',
+  'Vex'
+] as const;
+
+export type WeaponMastery = typeof WEAPON_MASTERIES[number];

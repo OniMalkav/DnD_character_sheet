@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck, BicepsFlexed, Briefcase, FileText } from 'lucide-react';
+import { Coins, Package, Plus, Sparkles, X, List, ShieldCheck, BicepsFlexed, Briefcase, FileText, Zap } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, calculateModifier } from '@/lib/utils';
+import { WEAPON_MASTERIES } from '@/lib/constants';
 
 // CENTRALIZED STYLE THEME FOR EASY EDITING
 const THEME = {
@@ -288,6 +289,56 @@ export default function InventoryTab() {
                         </Button>
                         <Button size="icon" variant="ghost" className="w-7 h-7 hover:text-destructive" style={{ color: THEME.colors.textMuted }} onClick={() => removeEquipmentItem(item.id)}><X className="w-4 h-4" /></Button>
                       </div>
+
+                      {/* WEAPON MASTERY ROW (Positioned cleanly between weapon main and description) */}
+                      {isWeapon && (
+                        <div className="pl-6 pr-2 py-1 flex items-center gap-1 bg-black/25 rounded border border-white/5 overflow-x-auto no-scrollbar">
+                          <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground shrink-0 flex items-center gap-0.5 mr-0.5">
+                            <Zap className="w-2.5 h-2.5 text-yellow-400" /> Mastery:
+                          </span>
+                          <div className="flex items-center gap-1 flex-nowrap shrink-0">
+                            {WEAPON_MASTERIES.filter(m => m !== 'None').map(mastery => {
+                              const currentMasteries = (item.mastery || '')
+                                .split(',')
+                                .map(s => s.trim())
+                                .filter(Boolean);
+                              const isSelected = currentMasteries.includes(mastery);
+
+                              return (
+                                <button
+                                  key={mastery}
+                                  type="button"
+                                  onClick={() => {
+                                    let nextList: string[];
+                                    if (isSelected) {
+                                      nextList = currentMasteries.filter(m => m !== mastery);
+                                    } else {
+                                      nextList = [...currentMasteries, mastery];
+                                    }
+                                    updateEquipmentItem(item.id, 'mastery', nextList.join(', '));
+                                  }}
+                                  style={isSelected ? {
+                                    backgroundColor: 'var(--inv-mastery-active-bg, #ffffff)',
+                                    color: 'var(--inv-mastery-active-text, #000000)',
+                                  } : {
+                                    backgroundColor: 'var(--inv-mastery-inactive-bg, rgba(255,255,255,0.05))',
+                                    color: 'var(--inv-mastery-inactive-text, #a3a3a3)',
+                                  }}
+                                  className={cn(
+                                    "text-[8px] font-black uppercase px-1.5 py-0.5 rounded transition-all cursor-pointer select-none leading-none border shrink-0",
+                                    isSelected
+                                      ? "border-white shadow-sm font-bold scale-[1.02]"
+                                      : "border-white/10 hover:border-white/20 hover:text-white"
+                                  )}
+                                >
+                                  {mastery}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {(openDesc[item.id] || (item.description && item.description.length > 0)) && (
                         <div className="pl-2 pr-1 pb-1">
                           <Input 

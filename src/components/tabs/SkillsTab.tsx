@@ -100,6 +100,13 @@ export default function SkillsTab({
 
     const perceptionMultiplier = profs.has('EXP_Perception') ? 2 : profs.has('Perception') ? 1 : 0;
     const mathPassivePerception = 10 + calculateModifier(stats.wis) + (activePb * perceptionMultiplier);
+    
+    const insightMultiplier = profs.has('EXP_Insight') ? 2 : profs.has('Insight') ? 1 : 0;
+    const mathPassiveInsight = 10 + calculateModifier(stats.wis) + (activePb * insightMultiplier);
+
+    const investigationMultiplier = profs.has('EXP_Investigation') ? 2 : profs.has('Investigation') ? 1 : 0;
+    const mathPassiveInvestigation = 10 + calculateModifier(stats.int) + (activePb * investigationMultiplier);
+
     const mathInitiative = calculateModifier(stats.dex);
     const mathSpeed = 30;
 
@@ -139,7 +146,7 @@ export default function SkillsTab({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
                         <div className="flex flex-col gap-1 items-center">
                             <div className="flex items-center justify-center h-[14px]">
                                 <Label htmlFor="passive-perception" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Passive Perc.</Label>
@@ -149,6 +156,30 @@ export default function SkillsTab({
                                 value={charInfo.passivePerception || ''}
                                 onChange={(e) => updateCharInfo('passivePerception', e.target.value)}
                                 placeholder={mathPassivePerception.toString()}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="passive-insight" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Passive Insight</Label>
+                            </div>
+                            <Input
+                                id="passive-insight"
+                                value={charInfo.passiveInsight || ''}
+                                onChange={(e) => updateCharInfo('passiveInsight', e.target.value)}
+                                placeholder={mathPassiveInsight.toString()}
+                                className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1 items-center">
+                            <div className="flex items-center justify-center h-[14px]">
+                                <Label htmlFor="passive-invest" className="uppercase text-center leading-none" style={{ fontSize: 'var(--font-size-label)', color: THEME.colors.vitalsLabel }}>Passive Invest.</Label>
+                            </div>
+                            <Input
+                                id="passive-invest"
+                                value={charInfo.passiveInvestigation || ''}
+                                onChange={(e) => updateCharInfo('passiveInvestigation', e.target.value)}
+                                placeholder={mathPassiveInvestigation.toString()}
                                 className="h-8 w-full px-1 text-center bg-transparent border border-primary/30 rounded shadow-inner vitals-input focus-visible:ring-1 focus-visible:ring-primary/50"
                             />
                         </div>

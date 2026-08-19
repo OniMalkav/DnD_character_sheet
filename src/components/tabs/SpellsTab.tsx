@@ -47,6 +47,7 @@ const THEME = {
     upcastText: 'var(--spell-upcast-text)',
     addBtnBg: 'var(--spell-add-btn-bg)',
     addBtnText: 'var(--spell-add-btn-text)',
+    preparedBg: 'var(--spell-prepared-bg)',
   }
 };
 
@@ -58,6 +59,7 @@ export default function SpellsTab() {
 
   const [newSpellName, setNewSpellName] = useState('');
   const [newSpellLevel, setNewSpellLevel] = useState('0');
+  const [showPreparedOnly, setShowPreparedOnly] = useState(false);
 
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
 
@@ -106,6 +108,12 @@ export default function SpellsTab() {
     }
   };
 
+  // Filter spells if "Show Prepared" is active
+  const filteredSpells = useMemo(() => {
+    if (!showPreparedOnly) return spells;
+    return spells.filter(s => !!s.prepared);
+  }, [spells, showPreparedOnly]);
+
   return (
     <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       {/* TOP STAT BAR */}
@@ -149,6 +157,15 @@ export default function SpellsTab() {
               <span className="text-3xl font-black font-headline" style={{ color: THEME.colors.attackBonus }}>+{spellAttackMod}</span>
             </div>
           </div>
+
+          <Button
+            onClick={longRest}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto flex items-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" /> Reset All Slots
+          </Button>
         </CardContent>
       </Card>
 
@@ -196,9 +213,20 @@ export default function SpellsTab() {
             <CardTitle className="flex items-center gap-2"><Book className="w-5 h-5" /> Spellbook</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 mb-4">
 
-              <div className="flex-1 relative">
+              {/* SHOW PREPARED / SHOW ALL FILTER TOGGLE BUTTON (Placed before Spell Name input) */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPreparedOnly(prev => !prev)}
+                className="h-10 text-xs font-bold uppercase tracking-wider px-3 bg-background border-input text-foreground hover:bg-accent hover:text-accent-foreground transition-all whitespace-nowrap shadow-sm"
+                title={showPreparedOnly ? "Show all spells" : "Filter by prepared spells only"}
+              >
+                {showPreparedOnly ? "Show All" : "Show Prepared"}
+              </Button>
+
+              <div className="flex-1 min-w-[140px] relative">
                 <Input
                   type="text"
                   list="spell-options"
@@ -229,11 +257,13 @@ export default function SpellsTab() {
             </div>
 
             <ScrollArea className="flex-1 h-[350px] pr-1">
-              {spells.length === 0 ? (
-                <div className="text-center text-muted-foreground/80 py-10 italic">No spells added yet.</div>
+              {filteredSpells.length === 0 ? (
+                <div className="text-center text-muted-foreground/80 py-10 italic">
+                  {showPreparedOnly ? "No prepared spells found." : "No spells added yet."}
+                </div>
               ) : (
                 <div className="space-y-4">
-                  {Object.entries(spells.reduce((acc, spell) => {
+                  {Object.entries(filteredSpells.reduce((acc, spell) => {
                     (acc[spell.level] = acc[spell.level] || []).push(spell);
                     return acc;
                   }, {} as Record<number, typeof spells>)).map(([level, levelSpells]) => (
@@ -252,9 +282,16 @@ export default function SpellsTab() {
                             (s: any) => s.name.toLowerCase() === spell.name.toLowerCase()
                           );
                           const isExpanded = expandedId === spell.id;
+                          const requiresConcentration = !!fullSpellDetails?.concentration;
 
                           return (
-                            <div key={spell.id} className="group bg-background/30 rounded border border-transparent hover:border-border transition-all overflow-hidden">
+                            <div
+                              key={spell.id}
+                              className="group rounded border border-transparent hover:border-border transition-all overflow-hidden"
+                              style={{
+                                backgroundColor: spell.prepared ? THEME.colors.preparedBg : 'hsl(var(--background) / 0.3)'
+                              }}
+                            >
 
                               {/* Clickable Header */}
                               <div
@@ -265,6 +302,7 @@ export default function SpellsTab() {
                                   <input
                                     type="checkbox"
                                     checked={!!spell.prepared}
+                                    onClick={(e) => e.stopPropagation()}
                                     onChange={(e) => {
                                       e.stopPropagation();
                                       toggleSpellPrepared(spell.id);
@@ -273,6 +311,19 @@ export default function SpellsTab() {
                                     title="Prepared"
                                   />
                                   <span className="text-foreground font-medium">{spell.name}</span>
+                                  {requiresConcentration && (
+                                    <span
+                                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-black tracking-tighter border shadow-sm"
+                                      style={{
+                                        color: THEME.colors.concentration,
+                                        borderColor: 'color-mix(in srgb, var(--spell-concentration), transparent 50%)',
+                                        backgroundColor: 'color-mix(in srgb, var(--spell-concentration), transparent 85%)'
+                                      }}
+                                      title="Requires Concentration"
+                                    >
+                                      C
+                                    </span>
+                                  )}
                                 </div>
 
                                 <div className="flex items-center gap-1">

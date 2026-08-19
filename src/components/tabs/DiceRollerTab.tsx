@@ -97,7 +97,7 @@ export default function DiceRollerTab() {
                         key={weapon.id}
                         variant="outline"
                         size="sm"
-                        className="h-9 font-bold gap-2 bg-[var(--dice-weapon-btn)] border-white/10 hover:border-primary/40 hover:bg-primary/5 group"
+                        className="h-auto py-1.5 px-3 font-bold gap-2.5 bg-[var(--dice-weapon-btn)] border-white/10 hover:border-primary/40 hover:bg-primary/5 group flex items-center"
                         onClick={() => {
                           const newCounts: DiceCounts = { d4: 0, d6: 0, d8: 0, d10: 0, d12: 0, d20: 1, d100: 0 };
                           if (weapon.damageDice) {
@@ -113,8 +113,26 @@ export default function DiceRollerTab() {
                           setDamageMod(parseInt(weapon.damageBonus?.toString() || '0') || 0);
                         }}
                       >
-                        <span className="text-white/90 group-hover:text-primary transition-colors">{weapon.name}</span>
-                        <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[length:var(--dice-font-weapon-mod)] font-black">
+                        <div className="flex flex-col items-start text-left">
+                          <span className="text-white/90 group-hover:text-primary transition-colors text-xs font-bold leading-tight">{weapon.name}</span>
+                          {weapon.mastery && weapon.mastery !== 'None' && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {weapon.mastery.split(',').map(s => s.trim()).filter(Boolean).map(m => (
+                                <span 
+                                  key={m} 
+                                  style={{
+                                    backgroundColor: 'var(--inv-mastery-active-bg, #ffffff)',
+                                    color: 'var(--inv-mastery-active-text, #000000)',
+                                  }}
+                                  className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded leading-none shadow-sm"
+                                >
+                                  {m}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[length:var(--dice-font-weapon-mod)] font-black ml-auto">
                           +{weapon.ac || '0'}
                         </span>
                       </Button>

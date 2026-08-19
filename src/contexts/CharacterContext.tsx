@@ -420,6 +420,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     portraitUrl: '',
     speed: '',
     passivePerception: '',
+    passiveInsight: '',
+    passiveInvestigation: '',
     initiative: '',
     miscVitalLabel: 'Custom',
     miscVitalValue: ''
@@ -492,26 +494,79 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const data = await loadCharacterFromCloud(user.uid, id);
       if (data) {
-        if (data.characterName !== undefined) setCharacterName(data.characterName);
-        if (data.charInfo) setCharInfo(data.charInfo);
-        if (data.stats) setStats(data.stats);
-        if (data.pb) setPb(data.pb);
-        if (data.notes !== undefined) setNotes(data.notes);
-        if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
-        if (data.bagItems !== undefined) setBagItems(data.bagItems);
-        if (data.currency) setCurrency(data.currency);
-        if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
-        if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
-        if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
-        if (data.featsList && Array.isArray(data.featsList)) setFeatsList(data.featsList);
-        if (data.counters && Array.isArray(data.counters)) setCounters(data.counters);
-        if (data.spellAbility) setSpellAbility(data.spellAbility);
-        if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
-        if (data.spellSlots) setSpellSlots(data.spellSlots);
-        if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
-        if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
-        if (data.summonData) setSummonData(data.summonData);
-        toast({ title: "Character Loaded", description: `${data.characterName} has been summoned.` });
+        // Reset to clean defaults first to avoid any data bleeding from the previous character
+        setCharacterName(data.characterName ?? '');
+        setCharInfo({
+          speed: '',
+          passivePerception: '',
+          passiveInsight: '',
+          passiveInvestigation: '',
+          initiative: '',
+          alignment: '', race: '', class: '', subclass: '', level: 1, xp: 0,
+          hp: 10, maxHp: 10, tempHp: 0, ac: 10,
+          hitDie: 'd8', hitDieCount: 1, exhaustion: 0, heroicInspiration: false, isPoisoned: false,
+          cond1: '', cond2: '', cond3: '', portraitUrl: '', feats: '', background: '', class2: '', subclass2: '', level2: 0,
+          miscVitalLabel: 'Custom', miscVitalValue: '',
+          ...(data.charInfo || {})
+        });
+        const newStats = data.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+        setStats(newStats);
+        prevConModRef.current = Math.floor((newStats.con - 10) / 2);
+        setPb(data.pb ?? 0);
+        setNotes(data.notes ?? '');
+        setInventoryItems(Array.isArray(data.inventoryItems) ? data.inventoryItems : []);
+        setBagItems(Array.isArray(data.bagItems) ? data.bagItems : []);
+        setCurrency(data.currency || { cp: 0, sp: 0, gp: 0, ep: 0, pp: 0 });
+        setConsumables(Array.isArray(data.consumables) ? data.consumables : []);
+        setEquipmentItems(Array.isArray(data.equipmentItems) ? data.equipmentItems : []);
+        setUntrackedItems(Array.isArray(data.untrackedItems) ? data.untrackedItems : []);
+        setFeatsList(Array.isArray(data.featsList) ? data.featsList : []);
+        setCounters(Array.isArray(data.counters) ? data.counters : []);
+        setSpellAbility(data.spellAbility || 'int');
+        setDoubleCarry(data.doubleCarry ?? false);
+        setSpellSlots(data.spellSlots || {
+          '1': { max: 0, slots: [] }, '2': { max: 0, slots: [] }, '3': { max: 0, slots: [] },
+          '4': { max: 0, slots: [] }, '5': { max: 0, slots: [] }, '6': { max: 0, slots: [] },
+          '7': { max: 0, slots: [] }, '8': { max: 0, slots: [] }, '9': { max: 0, slots: [] },
+        });
+        setSpells(Array.isArray(data.spells) ? data.spells : []);
+        setProfs(Array.isArray(data.profs) ? new Set(data.profs) : new Set());
+        if (data.summonData) {
+          const s = data.summonData;
+          setSummonData({
+            name: s.name || 'Summoned Creature',
+            type: s.type || 'Construct',
+            ac: s.ac ?? 13,
+            hp: s.hp ?? 20,
+            maxHp: s.maxHp ?? 20,
+            initiative: s.initiative ?? 0,
+            speed: s.speed || '30 ft.',
+            stats: s.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+            saves: s.saves || '',
+            skills: s.skills || '',
+            senses: s.senses || '',
+            languages: s.languages || '',
+            resistances: s.resistances || '',
+            immunities: s.immunities || '',
+            traits: Array.isArray(s.traits) ? s.traits : [],
+            actions: Array.isArray(s.actions) ? s.actions : [],
+            bonusActions: Array.isArray(s.bonusActions) ? s.bonusActions : [],
+            reactions: Array.isArray(s.reactions) ? s.reactions : [],
+            miscVitalLabel: s.miscVitalLabel || 'Custom',
+            miscVitalValue: s.miscVitalValue || ''
+          });
+        } else {
+          setSummonData({
+            name: 'Summoned Creature',
+            type: 'Construct',
+            ac: 13, hp: 20, maxHp: 20, initiative: 0, speed: '30 ft.',
+            stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+            saves: '', skills: '', senses: '', languages: '', resistances: '', immunities: '',
+            traits: [], actions: [], bonusActions: [], reactions: [],
+            miscVitalLabel: 'Custom', miscVitalValue: ''
+          });
+        }
+        toast({ title: "Character Loaded", description: `${data.characterName || 'Hero'} has been summoned.` });
       }
     } catch (e) {
       toast({ variant: "destructive", title: "Load Failed", description: "Could not retrieve character data." });
@@ -523,6 +578,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCharInfo({
       speed: '',
       passivePerception: '',
+      passiveInsight: '',
+      passiveInvestigation: '',
       initiative: '',
       alignment: '', race: '', class: '', subclass: '', level: 1, xp: 0,
       hp: 10, maxHp: 10, tempHp: 0, ac: 10,
@@ -961,26 +1018,75 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      if (data.characterName !== undefined) setCharacterName(data.characterName);
-      if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
-      if (data.stats) setStats(data.stats);
-      if (data.pb) setPb(data.pb);
-      if (data.notes !== undefined) setNotes(data.notes);
-      if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
-      if (data.bagItems !== undefined) setBagItems(data.bagItems);
-      if (data.currency) setCurrency(data.currency);
-      if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
-      if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
-      if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
-      if (data.featsList && Array.isArray(data.featsList)) setFeatsList(data.featsList);
-      if (data.counters && Array.isArray(data.counters)) setCounters(data.counters);
-      if (data.spellAbility) setSpellAbility(data.spellAbility);
-      if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
-
-      if (data.spellSlots) setSpellSlots(data.spellSlots);
-      if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
-      if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
-      if (data.summonData) setSummonData(data.summonData);
+      setCharacterName(data.characterName ?? '');
+      setCharInfo({
+        speed: '',
+        passivePerception: '',
+        initiative: '',
+        alignment: '', race: '', class: '', subclass: '', level: 1, xp: 0,
+        hp: 10, maxHp: 10, tempHp: 0, ac: 10,
+        hitDie: 'd8', hitDieCount: 1, exhaustion: 0, heroicInspiration: false, isPoisoned: false,
+        cond1: '', cond2: '', cond3: '', portraitUrl: '', feats: '', background: '', class2: '', subclass2: '', level2: 0,
+        miscVitalLabel: 'Custom', miscVitalValue: '',
+        ...(data.charInfo || {})
+      });
+      const newStats = data.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+      setStats(newStats);
+      prevConModRef.current = Math.floor((newStats.con - 10) / 2);
+      setPb(data.pb ?? 0);
+      setNotes(data.notes ?? '');
+      setInventoryItems(Array.isArray(data.inventoryItems) ? data.inventoryItems : []);
+      setBagItems(Array.isArray(data.bagItems) ? data.bagItems : []);
+      setCurrency(data.currency || { cp: 0, sp: 0, gp: 0, ep: 0, pp: 0 });
+      setConsumables(Array.isArray(data.consumables) ? data.consumables : []);
+      setEquipmentItems(Array.isArray(data.equipmentItems) ? data.equipmentItems : []);
+      setUntrackedItems(Array.isArray(data.untrackedItems) ? data.untrackedItems : []);
+      setFeatsList(Array.isArray(data.featsList) ? data.featsList : []);
+      setCounters(Array.isArray(data.counters) ? data.counters : []);
+      setSpellAbility(data.spellAbility || 'int');
+      setDoubleCarry(data.doubleCarry ?? false);
+      setSpellSlots(data.spellSlots || {
+        '1': { max: 0, slots: [] }, '2': { max: 0, slots: [] }, '3': { max: 0, slots: [] },
+        '4': { max: 0, slots: [] }, '5': { max: 0, slots: [] }, '6': { max: 0, slots: [] },
+        '7': { max: 0, slots: [] }, '8': { max: 0, slots: [] }, '9': { max: 0, slots: [] },
+      });
+      setSpells(Array.isArray(data.spells) ? data.spells : []);
+      setProfs(Array.isArray(data.profs) ? new Set(data.profs) : new Set());
+      if (data.summonData) {
+        const s = data.summonData;
+        setSummonData({
+          name: s.name || 'Summoned Creature',
+          type: s.type || 'Construct',
+          ac: s.ac ?? 13,
+          hp: s.hp ?? 20,
+          maxHp: s.maxHp ?? 20,
+          initiative: s.initiative ?? 0,
+          speed: s.speed || '30 ft.',
+          stats: s.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+          saves: s.saves || '',
+          skills: s.skills || '',
+          senses: s.senses || '',
+          languages: s.languages || '',
+          resistances: s.resistances || '',
+          immunities: s.immunities || '',
+          traits: Array.isArray(s.traits) ? s.traits : [],
+          actions: Array.isArray(s.actions) ? s.actions : [],
+          bonusActions: Array.isArray(s.bonusActions) ? s.bonusActions : [],
+          reactions: Array.isArray(s.reactions) ? s.reactions : [],
+          miscVitalLabel: s.miscVitalLabel || 'Custom',
+          miscVitalValue: s.miscVitalValue || ''
+        });
+      } else {
+        setSummonData({
+          name: 'Summoned Creature',
+          type: 'Construct',
+          ac: 13, hp: 20, maxHp: 20, initiative: 0, speed: '30 ft.',
+          stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+          saves: '', skills: '', senses: '', languages: '', resistances: '', immunities: '',
+          traits: [], actions: [], bonusActions: [], reactions: [],
+          miscVitalLabel: 'Custom', miscVitalValue: ''
+        });
+      }
 
       toast({ title: "Cloud Load Successful", description: "Character data restored from Firestore." });
     } catch (error) {
@@ -1015,29 +1121,75 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
-        if (data.characterName !== undefined) setCharacterName(data.characterName);
-        if (data.charInfo) setCharInfo(prev => ({ ...prev, ...data.charInfo }));
-        if (data.stats) setStats(data.stats);
-        if (data.pb) setPb(data.pb);
-        if (data.notes !== undefined) setNotes(data.notes);
-        if (data.inventoryItems !== undefined) setInventoryItems(data.inventoryItems);
-        if (data.bagItems !== undefined) setBagItems(data.bagItems);
-        if (data.currency) setCurrency(data.currency);
-        if (data.consumables && Array.isArray(data.consumables)) setConsumables(data.consumables);
-        if (data.equipmentItems && Array.isArray(data.equipmentItems)) setEquipmentItems(data.equipmentItems);
-        if (data.untrackedItems && Array.isArray(data.untrackedItems)) setUntrackedItems(data.untrackedItems);
-        if (data.featsList && Array.isArray(data.featsList)) setFeatsList(data.featsList);
-        if (data.counters && Array.isArray(data.counters)) setCounters(data.counters);
-        if (data.spellAbility) setSpellAbility(data.spellAbility);
-        if (data.doubleCarry !== undefined) setDoubleCarry(data.doubleCarry);
-
-        if (data.spellSlots) {
-          setSpellSlots(data.spellSlots);
+        setCharacterName(data.characterName ?? '');
+        setCharInfo({
+          speed: '',
+          passivePerception: '',
+          initiative: '',
+          alignment: '', race: '', class: '', subclass: '', level: 1, xp: 0,
+          hp: 10, maxHp: 10, tempHp: 0, ac: 10,
+          hitDie: 'd8', hitDieCount: 1, exhaustion: 0, heroicInspiration: false, isPoisoned: false,
+          cond1: '', cond2: '', cond3: '', portraitUrl: '', feats: '', background: '', class2: '', subclass2: '', level2: 0,
+          miscVitalLabel: 'Custom', miscVitalValue: '',
+          ...(data.charInfo || {})
+        });
+        const newStats = data.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+        setStats(newStats);
+        prevConModRef.current = Math.floor((newStats.con - 10) / 2);
+        setPb(data.pb ?? 0);
+        setNotes(data.notes ?? '');
+        setInventoryItems(Array.isArray(data.inventoryItems) ? data.inventoryItems : []);
+        setBagItems(Array.isArray(data.bagItems) ? data.bagItems : []);
+        setCurrency(data.currency || { cp: 0, sp: 0, gp: 0, ep: 0, pp: 0 });
+        setConsumables(Array.isArray(data.consumables) ? data.consumables : []);
+        setEquipmentItems(Array.isArray(data.equipmentItems) ? data.equipmentItems : []);
+        setUntrackedItems(Array.isArray(data.untrackedItems) ? data.untrackedItems : []);
+        setFeatsList(Array.isArray(data.featsList) ? data.featsList : []);
+        setCounters(Array.isArray(data.counters) ? data.counters : []);
+        setSpellAbility(data.spellAbility || 'int');
+        setDoubleCarry(data.doubleCarry ?? false);
+        setSpellSlots(data.spellSlots || {
+          '1': { max: 0, slots: [] }, '2': { max: 0, slots: [] }, '3': { max: 0, slots: [] },
+          '4': { max: 0, slots: [] }, '5': { max: 0, slots: [] }, '6': { max: 0, slots: [] },
+          '7': { max: 0, slots: [] }, '8': { max: 0, slots: [] }, '9': { max: 0, slots: [] },
+        });
+        setSpells(Array.isArray(data.spells) ? data.spells : []);
+        setProfs(Array.isArray(data.profs) ? new Set(data.profs) : new Set());
+        if (data.summonData) {
+          const s = data.summonData;
+          setSummonData({
+            name: s.name || 'Summoned Creature',
+            type: s.type || 'Construct',
+            ac: s.ac ?? 13,
+            hp: s.hp ?? 20,
+            maxHp: s.maxHp ?? 20,
+            initiative: s.initiative ?? 0,
+            speed: s.speed || '30 ft.',
+            stats: s.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+            saves: s.saves || '',
+            skills: s.skills || '',
+            senses: s.senses || '',
+            languages: s.languages || '',
+            resistances: s.resistances || '',
+            immunities: s.immunities || '',
+            traits: Array.isArray(s.traits) ? s.traits : [],
+            actions: Array.isArray(s.actions) ? s.actions : [],
+            bonusActions: Array.isArray(s.bonusActions) ? s.bonusActions : [],
+            reactions: Array.isArray(s.reactions) ? s.reactions : [],
+            miscVitalLabel: s.miscVitalLabel || 'Custom',
+            miscVitalValue: s.miscVitalValue || ''
+          });
+        } else {
+          setSummonData({
+            name: 'Summoned Creature',
+            type: 'Construct',
+            ac: 13, hp: 20, maxHp: 20, initiative: 0, speed: '30 ft.',
+            stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+            saves: '', skills: '', senses: '', languages: '', resistances: '', immunities: '',
+            traits: [], actions: [], bonusActions: [], reactions: [],
+            miscVitalLabel: 'Custom', miscVitalValue: ''
+          });
         }
-
-        if (data.spells && Array.isArray(data.spells)) setSpells(data.spells);
-        if (data.profs && Array.isArray(data.profs)) setProfs(new Set(data.profs));
-        if (data.summonData) setSummonData(data.summonData);
 
         if (e.target) e.target.value = '';
         toast({ title: "Import Successful", description: "Character data has been loaded." });

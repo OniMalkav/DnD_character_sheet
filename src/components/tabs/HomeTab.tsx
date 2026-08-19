@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import PortraitUpload from '@/components/character/PortraitUpload';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BicepsFlexed, Shield, Sword, Download, Upload, CloudUpload, CloudDownload, LogIn, LogOut, Zap } from 'lucide-react';
+import { BicepsFlexed, Shield, Sword, Download, Upload, CloudUpload, CloudDownload, LogIn, LogOut, Zap, Plus, Minus, Skull, CheckCircle2, XCircle } from 'lucide-react';
 import { cn, calculateModifier } from '@/lib/utils';
 
 const THEME = {
@@ -21,18 +21,52 @@ const THEME = {
     primary: 'var(--primary)',
     cloud: 'var(--cloud-sync)',
     textMuted: 'var(--muted-foreground)',
+    deathSuccess: 'var(--death-save-success, #19fc24)',
+    deathFailure: 'var(--death-save-failure, #ef4444)',
   }
 };
 
 export default function HomeTab() {
   const { 
-    characterName, setCharacterName, charInfo, stats, profs, 
+    characterName, setCharacterName, charInfo, updateCharInfo, stats, profs, 
     consumables, equipmentItems, inventoryItems, doubleCarry,
     shortRest, longRest,
     handleExport, handleImportClick, handleCloudSave, handleCloudLoad,
     user, handleSignIn, handleSignOut,
     cloudCharacters, loadCharacterById, resetCharacter
   } = useCharacter();
+
+  const currentHp = parseInt(charInfo.hp?.toString() || '0') || 0;
+  const maxHp = parseInt(charInfo.maxHp?.toString() || '10') || 10;
+
+  // Death Saves state (3 successes, 3 failures)
+  const [deathSaves, setDeathSaves] = useState<{ successes: boolean[]; failures: boolean[] }>({
+    successes: [false, false, false],
+    failures: [false, false, false],
+  });
+
+  // Automatically reset Death Saves if HP increases above 0
+  useEffect(() => {
+    if (currentHp > 0) {
+      setDeathSaves({
+        successes: [false, false, false],
+        failures: [false, false, false],
+      });
+    }
+  }, [currentHp]);
+
+  const toggleDeathSave = (type: 'successes' | 'failures', index: number) => {
+    setDeathSaves(prev => {
+      const nextList = [...prev[type]];
+      nextList[index] = !nextList[index];
+      return { ...prev, [type]: nextList };
+    });
+  };
+
+  const adjustHp = (amount: number) => {
+    const nextHp = Math.max(0, Math.min(maxHp, currentHp + amount));
+    updateCharInfo('hp', nextHp);
+  };
 
   // WEIGHT LOGIC (Synced with InventoryTab)
   const totalWeight = consumables.reduce((acc, item) => acc + ((item.weight || 0) * item.count), 0) + 
@@ -64,7 +98,12 @@ export default function HomeTab() {
             <LogOut className="w-4 h-4 mr-2" /> Sign Out
           </Button>
         ) : (
-          <Button onClick={handleSignIn} className="h-9 text-xs font-bold uppercase tracking-wider border-0 px-4" style={{ backgroundColor: THEME.colors.primary, color: '#FFFFFF' }}>
+          <Button
+            onClick={handleSignIn}
+            variant="outline"
+            className="h-9 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500/10 border-indigo-500/20"
+            style={{ color: THEME.colors.cloud }}
+          >
             <LogIn className="w-4 h-4 mr-2" /> Cloud Sign In
           </Button>
         )}
@@ -178,12 +217,34 @@ export default function HomeTab() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-baseline gap-1 text-white">
-                <span className="text-6xl font-black tabular-nums tracking-tighter">{charInfo.hp}</span>
-                <span className="text-2xl font-bold opacity-80">/ {charInfo.maxHp}</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-baseline gap-1 text-white">
+                  <span className="text-6xl font-black tabular-nums tracking-tighter">{charInfo.hp}</span>
+                  <span className="text-2xl font-bold opacity-80">/ {charInfo.maxHp}</span>
+                </div>
+                
+                {/* QUICK HP ADJUSTMENT BUTTONS */}
+                <div className="flex items-center gap-1 self-center ml-2">
+                  <button
+                    onClick={() => adjustHp(-1)}
+                    disabled={currentHp <= 0}
+                    title="Decrease HP (-1)"
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-white/90 hover:text-white transition-all shadow-sm"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => adjustHp(1)}
+                    disabled={currentHp >= maxHp}
+                    title="Increase HP (+1)"
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-white/90 hover:text-white transition-all shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               {parseInt(charInfo.tempHp?.toString() || '0') > 0 && (
-                <div className="inline-block px-2 py-0.5 rounded bg-orange-500/20 border border-orange-500/40 text-[10px] font-black text-white uppercase tracking-tighter">
+                <div className="inline-block px-2 py-0.5 rounded bg-[color:var(--home-temp-hp-bg)] border border-[color:var(--home-temp-hp-border)] text-[10px] font-black text-white uppercase tracking-tighter">
                   +{charInfo.tempHp} Temp HP
                 </div>
               )}
@@ -205,6 +266,67 @@ export default function HomeTab() {
               </div>
             </div>
           </div>
+
+          {/* DEATH SAVES CONTAINER (Only visible when currentHp === 0) */}
+          {currentHp === 0 && (
+            <div className="bg-[color:var(--home-death-panel-bg)] border border-[color:var(--home-death-panel-border)] rounded-2xl p-4 space-y-3 backdrop-blur-md shadow-2xl animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center justify-between border-b border-[color:var(--home-death-panel-border)] pb-2">
+                <div className="flex items-center gap-2">
+                  <Skull className="w-4 h-4 text-red-400 animate-pulse" />
+                  <span className="text-xs font-black uppercase tracking-[0.2em] text-red-300">Death Saves</span>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/50">Unconscious</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {/* SUCCESSES ROW */}
+                <div className="flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Successes</span>
+                  <div className="flex items-center gap-2.5">
+                    {deathSaves.successes.map((checked, idx) => (
+                      <button
+                        key={`success-${idx}`}
+                        type="button"
+                        onClick={() => toggleDeathSave('successes', idx)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer active:scale-90",
+                          checked
+                            ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] text-black"
+                            : "border-white/20 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                        )}
+                        title={`Success ${idx + 1}`}
+                      >
+                        {checked && <div className="w-2 h-2 rounded-full bg-black" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FAILURES ROW */}
+                <div className="flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-400">Failures</span>
+                  <div className="flex items-center gap-2.5">
+                    {deathSaves.failures.map((checked, idx) => (
+                      <button
+                        key={`failure-${idx}`}
+                        type="button"
+                        onClick={() => toggleDeathSave('failures', idx)}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer active:scale-90",
+                          checked
+                            ? "bg-rose-500 border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.5)] text-white"
+                            : "border-white/20 bg-white/5 hover:border-rose-500/50 hover:bg-rose-500/10"
+                        )}
+                        title={`Failure ${idx + 1}`}
+                      >
+                        {checked && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ABILITY MODS ROW (NEW) */}
           <div className="grid grid-cols-6 gap-2 bg-white/5 p-3 rounded-xl border border-white/10">

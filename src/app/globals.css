@@ -99,7 +99,7 @@
     --color-icons: #c77c1a;
     /* Global icon color (Amber) */
     --cloud-sync: #f1f1f1;
-    /* Cloud storage sync buttons */
+    /* Cloud storage sync and auth buttons text/icon color */
     --color-advantage: #19fc24;
     /* Highlight color for 'Advantage' mode */
     --color-disadvantage: #ef4444;
@@ -113,7 +113,19 @@
     --home-text-tertiary: #ffffff99;
     /* Color of labels like 'Hit Dice' */
     --home-btn-hover: #6366f11a;
-    /* Hover background for Cloud Save button */
+    /* Hover background for Cloud Sign In and Cloud Save buttons */
+    --death-save-success: #19fc24;
+    /* Color for death save successes */
+    --death-save-failure: #ef4444;
+    /* Color for death save failures */
+    --home-temp-hp-bg: rgba(249, 115, 22, 0.2);
+    /* Background for Temp HP badge */
+    --home-temp-hp-border: rgba(249, 115, 22, 0.4);
+    /* Border for Temp HP badge */
+    --home-death-panel-bg: rgba(69, 10, 10, 0.2);
+    /* Background of death saves container */
+    --home-death-panel-border: rgba(239, 68, 68, 0.3);
+    /* Border of death saves container */
 
     /* --- [DICE] --- */
     --color-crit: #fac215;
@@ -206,6 +218,14 @@
     /* Gold Pieces */
     --pp: #e2e8f0;
     /* Platinum Pieces */
+    --inv-mastery-active-bg: #ffffff;
+    /* Background color for selected weapon mastery pill */
+    --inv-mastery-active-text: #000000;
+    /* Text color for selected weapon mastery pill */
+    --inv-mastery-inactive-bg: rgba(255, 255, 255, 0.05);
+    /* Background color for unselected weapon mastery pill */
+    --inv-mastery-inactive-text: #a3a3a3;
+    /* Text color for unselected weapon mastery pill */
 
     /* --- [CHAR] --- */
     --char-label: var(--muted-foreground);
@@ -214,6 +234,18 @@
     /* Standard text color for character inputs */
     --char-border: rgba(255, 255, 255, 0.1);
     /* Faint borders for character sections */
+    --char-temp-hp-border: rgba(249, 115, 22, 0.2);
+    /* Border color for Temporary HP input */
+    --char-inspiration-border: rgba(234, 179, 8, 0.5);
+    /* Border highlight for Heroic Inspiration checkbox */
+    --char-feat-trait: #10b981;
+    /* Left border color for Trait type feats */
+    --char-feat-other: #8b5cf6;
+    /* Left border color for Other type feats */
+    --char-feat-feat: #3b82f6;
+    /* Left border color for standard Feat type */
+    --char-feat-invocation: #f97316;
+    /* Left border color for Invocation type feats */
 
     /* --- [SKILLS] --- */
     --vitals-number-color: #ffffff;
@@ -256,6 +288,8 @@
     /* Background color of the '+' button to add spells */
     --spell-add-btn-text: #ffffff;
     /* Text/Icon color of the '+' button to add spells */
+    --spell-prepared-bg: #ffffff18;
+    /* Background color for prepared spells */
 
     /* --- [SUMMON] --- */
     --summon-bg: #2e2621;

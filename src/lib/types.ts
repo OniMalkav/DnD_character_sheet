@@ -28,6 +28,8 @@ export type CharInfo = {
   portraitUrl?: string;
   speed: number | string;
   passivePerception: number | string;
+  passiveInsight?: number | string;
+  passiveInvestigation?: number | string;
   initiative: number | string;
   miscVitalLabel: string;
   miscVitalValue: string;
@@ -62,6 +64,7 @@ export type EquipmentItem = {
   description?: string;
   damageDice?: string;
   damageBonus?: number | string;
+  mastery?: string; // Comma-separated or selected masteries e.g. "Vex, Push"
 };
 
 // NEW: Structured type for general inventory gear
